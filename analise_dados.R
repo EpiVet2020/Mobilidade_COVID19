@@ -33,7 +33,7 @@ covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-da
 
 
 # IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
-concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTATGROJBJ3JEQMCDEVK7Q3O5I") %>% 
+concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTAUUOJ6LGPFVWJNOHEC7Q4HYC") %>% 
   select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
 
 
@@ -178,13 +178,36 @@ leaflet(mapa_distritos) %>%
 
 # EVOLUCAO DO MOBILITY RATE POR DISTRITO
 
-## Adicionar a base de dados coluna com o mobility rate feito com a media rolante dos ultimos 7 dias
+## Curva da tendencia
+
+### Grafico com data no eixo do x, mobility rate no eixo do y e distrito nas cores das linhas
+
+mobilidade_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = all_day_bing_tiles_visited_relative_change, color = polygon_name)) +
+  geom_point(size = 0.7,  aes(text = paste('Data: ', ds,
+                                           '<br>Mobilidade:', all_day_bing_tiles_visited_relative_change,
+                                           '<br>Distrito:', polygon_name))) +
+  geom_smooth(se = FALSE, size = 0.7) +
+  labs(title = "Evolução da Mobility Rate por Distrito",
+       x = "Mês",
+       y = "Mobility Rate") +
+  theme_classic() +
+  theme(legend.title = element_blank()) +
+  scale_x_date(breaks = "months", date_labels = "%b") +
+  geom_line(aes(y = 1, text = ""), size = 0.5, color = "black", linetype = "dotted")
+
+ggplotly(mobilidade_grafico, tooltip = "text")
+
+
+
+## Media rolante ultimos 7 dias
+
+### Adicionar a base de dados coluna com o mobility rate feito com a media rolante dos ultimos 7 dias
 mobilidade_pt <- mobilidade_pt %>% 
   group_by(polygon_name) %>% 
   mutate(mobilidade_media = rollapply(all_day_bing_tiles_visited_relative_change, 7, mean, na.pad = TRUE, align = "right"))
 
-## Fazer um grafico de linhas com data no eixo do x, mobility rate feito com media rolante no eixo do y e um distrito em cada linha
-mobilidade_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = mobilidade_media, color = polygon_name, group = 1, 
+### Fazer um grafico de linhas com data no eixo do x, mobility rate feito com media rolante no eixo do y e um distrito em cada linha
+mobilidade_media_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = mobilidade_media, color = polygon_name, group = 1, 
                                                 text = paste('Data: ', ds,
                                                              '<br>Mobilidade Média:', mobilidade_media,
                                                              '<br>Distrito:', polygon_name))) +
@@ -197,7 +220,8 @@ mobilidade_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = mobilidade_media, co
   scale_x_date(breaks = "months", date_labels = "%b") +
   geom_line(aes(y = 1, text = ""), color = "grey", linetype = "dotted")
 
-ggplotly(mobilidade_grafico, tooltip = "text")
+ggplotly(mobilidade_media_grafico, tooltip = "text")
+
 
 
 
@@ -207,8 +231,10 @@ ggplotly(mobilidade_grafico, tooltip = "text")
 
 ### O gr calcula-se dividindo o logaritmo da media de novos casos dos ultimos 3 dias pelo logaritmo da media de novos casos dos ultimos 7 dias.
 ### Para isso, fizemos uma tabela com uma coluna para a data e outra coluna para a divisao.
-### Para a data, começa na linha 7 porque e o primeiro dia em que temos registos dos 7 dias anteriores, o mesmo foi feito para o numerador para 
-### as datas coicidirem.
+### Para a data, começa na linha 7 porque e o primeiro dia em que temos registos dos 7 dias anteriores
+### Para o numerador tem de se comecar na linha 5 pois o primeiro valor que queremos e para a linha 7 e ele precisa das duas linhas
+### anteriores para fazer a rollmean dos ultimos 3 dias 
+### Para o demoninador nao precisamos de especificar onde queremos que comece porque ele so comeca quando tem 7 registos disponiveis
 
 gr <- as.data.frame(cbind(covid19pt[7:nrow(covid19pt),1], as.data.frame(log(rollmean(covid19pt[5:nrow(covid19pt),12], k=3))
                                                                         /log(rollmean(covid19pt[,12], k = 7)))))
@@ -362,30 +388,28 @@ incidencia_distrito_unmelt <- dcast(incidencia_distrito, data~distrito, value.va
 
 
 ### Calculo dos casos diários para o intervalo de tempo em que temos o numero de casos acumulados por dia 
-incidencia_distrito_lag <- incidencia_distrito_unmelt[2:105, 2:21] - incidencia_distrito_unmelt[1:104, 2:21]
+incidencia_distrito_lag <- cbind(incidencia_distrito_unmelt[2:105,1], 
+                                 incidencia_distrito_unmelt[2:105, 2:21] - incidencia_distrito_unmelt[1:104, 2:21])
+
+### Passar valores negativos para zero
+incidencia_distrito_lag[incidencia_distrito_lag < 0] <- 0
 
 
-### Calcular o growth rate tal como fizemos para Portugal
-gr_distritos <- as.data.frame(cbind(incidencia_distrito_unmelt[8:105,1], 
-                                    as.data.frame(log(rollapply(incidencia_distrito_lag[5:nrow(incidencia_distrito_lag), 1:20], 3, mean))
-                                                  /log(rollapply(incidencia_distrito_lag[, 1:20], 7, mean)))))
-
-
-# CÁLCULO DO LAG (dias de desfasamento do efeito da mobilidade no numero de casos de covid19)
-
-## Tabela com data, growth ratio, mobility rate 0, mobility rate -1 até mobility rate -30 (a mobilidade de à mais de 30 dias em princípio não
-## influencia os casos atuais)
-
-mobilidade_pt %>%
-  select(ds, polygon_name, all_day_bing_tiles_visited_relative_change) %>% 
-  group_by(polygon_name) %>% 
-  merge(gr[,2])
+### Calcular o growth rate tal como fizemos para Portugal 
+### Apesar da tabela incidencia_distrito_lag comecar na linha 2, o R identifica-a como sendo linha 1 por isso comecamos na linha 
+### 7 e nao na 8
+gr_distritos <- as.data.frame(cbind(incidencia_distrito_lag[7:104,1], 
+                                    as.data.frame(log(rollapply(incidencia_distrito_lag[5:nrow(incidencia_distrito_lag), 2:21], 3, mean))
+                                                  /log(rollapply(incidencia_distrito_lag[, 2:21], 7, mean)))))
 
 
 
-# MOBILITY RATE NACIONAL POR DIA (feito com média de cada distrito o que não é o melhor)
 
-## Dados do numero de pessoas por distrito disponiveis em <https://pt.db-city.com/Portugal>
+# MOBILITY RATE 
+
+## Nacional por dia (feito com media ponderada)
+
+### Dados do numero de pessoas por distrito disponiveis em <https://pt.db-city.com/Portugal>
 
 pop_guarda = 176086
 pop_leiria = 472895
@@ -407,15 +431,15 @@ pop_castelobranco = 203769
 pop_coimbra = 437642
 pop_evora = 171130
 pop_faro = 411468
-  
-## Selecionar na tabela da mobilidade as colunas da data, distrito e mobilidade
+
+### Selecionar na tabela da mobilidade as colunas da data, distrito e mobilidade
 
 mobilidade_distritos <- mobilidade_pt %>% 
   select(ds, polygon_name, all_day_bing_tiles_visited_relative_change)
 names(mobilidade_distritos) = c("data", "distrito", "mobilidade")
 
 
-## Tabela com a populacao por distrito
+### Tabela com a populacao por distrito
 
 pop_distritos <- data.frame(distrito = c("Guarda", "Leiria", "Lisboa", "Madeira", "Portalegre", "Porto", "Santarem", "Setubal", 
                                          "Viana do Castelo","Vila Real", "Aveiro", "Viseu", "Azores", "Beja", "Braga", "Braganca", 
@@ -425,19 +449,19 @@ pop_distritos <- data.frame(distrito = c("Guarda", "Leiria", "Lisboa", "Madeira"
                                           pop_braga, pop_braganca, pop_castelobranco, pop_coimbra, pop_evora,pop_faro))
 
 
-##Juntar as duas tabelas anteriores pelo distrito
+###Juntar as duas tabelas anteriores pelo distrito
 
 mobilidade_distritos <- left_join(mobilidade_distritos, pop_distritos, by = "distrito")
 
 
-## Nova coluna com a multiplicacao da mobilidade pela populacao de cada distrito (para a media ponderada)
+### Nova coluna com a multiplicacao da mobilidade pela populacao de cada distrito (para a media ponderada)
 
 mobilidade_distritos <- mobilidade_distritos %>% 
   mutate(mobilidadexpopulacao = mobilidade * populacao)
 
 
-## Tabela com a media ponderada do mobility rate nacional por dia (soma das multiplicacoes anteriores a dividir pela populacao de Portugal)
-  
+### Tabela com a media ponderada do mobility rate nacional por dia (soma das multiplicacoes anteriores a dividir pela populacao de Portugal)
+
 mobilidade_nacional <- mobilidade_distritos %>% 
   group_by(data) %>% 
   summarise(mobilidade_ponderada = sum(mobilidadexpopulacao) / sum(pop_distritos$populacao))
@@ -445,43 +469,94 @@ mobilidade_nacional <- mobilidade_distritos %>%
 
 mobilidade_nacional$data <- as.Date(mobilidade_nacional$data,format = "%d-%m-%Y")
 
-# CÁLCULO DO LAG UTILIZANDO A CORRELACAO ENTRE GROWTH RATIO NACIONAL E A MONILITY RATE NACIONAL
 
-## Fazer uma tabela com data, growth rate nacional e mobilidade nacional
+
+
+# CÁLCULO DO LAG (dias de desfasamento do efeito da mobilidade no numero de casos de covid19)
+
+## Nacional
+
+### Fazer uma tabela com data, growth rate nacional e mobilidade nacional
 
 correlacao <- left_join(gr, mobilidade_nacional, by = "data")
 
 
-## Criar variavel com valores do 0 ao 30
+### Criar variavel com valores do 0 ao 30
 
 lags <- seq(30)
 
 
-## Atribuir nome a cada futura coluna comecando com mr_ tendo depois o numero respetivo
+### Atribuir nome a cada futura coluna comecando com mr_ tendo depois o numero respetivo
 
 lag_names <- paste("mr", formatC(lags, width = nchar(max(lags))), 
                    sep = "_")
 
-## Funcao para fazer com que cada coluna seja a coluna anterior descendo uma linha
+### Funcao para fazer com que cada coluna seja a coluna anterior descendo uma linha
 
 lag_functions <- setNames(paste("lag(., ", lags, ")"), lag_names)
 
 
-## Adicionar as colunas anteriores a tabela correlacao
+### Adicionar as colunas anteriores a tabela correlacao
 
 correlacao <- correlacao %>% 
   mutate_at(vars(mobilidade_ponderada), funs_(lag_functions))
 
  
-## Calcular a Generalized Linear Regression (glm) entre growth rate nacional e mobility rate nacional para cada lag
+### Calcular a Generalized Linear Regression (glm) entre growth rate nacional e mobility rate nacional para cada lag
 
-### Com gaussian
+#### Com gaussian
 
-glm <- as.data.frame(coefficients(glm(Growth_Rate ~ ., family = "gaussian", data = correlacao))[c(-1, -2)]) %>% 
-  rownames_to_column(var = "Lag")
-glm[1] = 0:30
-names(glm)[2] = "coeficiente"
+glm <- as.data.frame(coefficients(glm(Growth_Rate ~ mobilidade_ponderada, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr1 = coefficients(glm(Growth_Rate ~ `mr_ 1`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr2 = coefficients(glm(Growth_Rate ~ `mr_ 2`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr3 = coefficients(glm(Growth_Rate ~ `mr_ 3`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr4 = coefficients(glm(Growth_Rate ~ `mr_ 4`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr5 = coefficients(glm(Growth_Rate ~ `mr_ 5`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr6 = coefficients(glm(Growth_Rate ~ `mr_ 6`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr7 = coefficients(glm(Growth_Rate ~ `mr_ 7`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr8 = coefficients(glm(Growth_Rate ~ `mr_ 8`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr9 = coefficients(glm(Growth_Rate ~ `mr_ 9`, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr10 = coefficients(glm(Growth_Rate ~ mr_10, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr11 = coefficients(glm(Growth_Rate ~ mr_11, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr12 = coefficients(glm(Growth_Rate ~ mr_12, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr13 = coefficients(glm(Growth_Rate ~ mr_13, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr14 = coefficients(glm(Growth_Rate ~ mr_14, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr15 = coefficients(glm(Growth_Rate ~ mr_15, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr16 = coefficients(glm(Growth_Rate ~ mr_16, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr17 = coefficients(glm(Growth_Rate ~ mr_17, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr18 = coefficients(glm(Growth_Rate ~ mr_18, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr19 = coefficients(glm(Growth_Rate ~ mr_19, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr20 = coefficients(glm(Growth_Rate ~ mr_20, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr21 = coefficients(glm(Growth_Rate ~ mr_21, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr22 = coefficients(glm(Growth_Rate ~ mr_22, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr23 = coefficients(glm(Growth_Rate ~ mr_23, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr24 = coefficients(glm(Growth_Rate ~ mr_24, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr25 = coefficients(glm(Growth_Rate ~ mr_25, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr26 = coefficients(glm(Growth_Rate ~ mr_26, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr27 = coefficients(glm(Growth_Rate ~ mr_27, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr28 = coefficients(glm(Growth_Rate ~ mr_28, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr29 = coefficients(glm(Growth_Rate ~ mr_29, family = "gaussian", data = correlacao))) %>% 
+  mutate(mr30 = coefficients(glm(Growth_Rate ~ mr_30, family = "gaussian", data = correlacao))) %>% 
+  rbind(0:30)
 
+names(glm)[1] = "mr0"
+glm_inv <- as.data.frame(t(glm[c(2, 3),])) %>% 
+  rownames_to_column(var = "mr")
+names(glm_inv) = c("mr", "coeficiente", "lag")
+
+
+lag_grafico <- ggplot(glm_inv, aes(x = lag, y = coeficiente)) +
+  geom_point() +
+  geom_line() +
+  geom_rect(xmin= 9, xmax= 11, ymin=-0.09, ymax=0.15, fill="coral2", size=0.1, alpha = 0.4) +
+  #annotate("rect", xmin= 9, xmax= 11, ymin=-Inf, ymax=Inf, fill = "coral2", alpha = 0.4) +
+  labs(title = "Correlação entre Mobility Rate e Growth Rate em Diferentes Desfasamentos (lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+  
+ggplotly(lag_grafico)
+  
 
 ### Com pearson
 
@@ -491,81 +566,85 @@ coeficientes <- correlacao[-1] %>%
 coeficientes[1] = 0:30
 names(coeficientes) = c("Lag", "coeficiente")
 
-
-## Fazer um grafico com lag no eixo do x e o coeficiente de correlacao no eixo do y
-## Com este grafico concluimos que o lag se deve situar entre 16 e 18 com o valor otimo de 17
-
 ggplot(coeficientes, aes(x = Lag, y = coeficiente)) +
   geom_point() +
   geom_line()
 
 
+## Por distrito
 
-# GROWTH RATE POR MOBILITY RATE COM LAG 17
 
-ggplot(correlacao, aes(x = mr_17, y = Growth_Rate)) +
-  geom_point() +
-  geom_smooth(method = "lm", color = "black", se = FALSE, formula = y~x) +
+
+
+
+
+
+# GROWTH RATE POR MOBILITY RATE COM LAG 10 (A)
+
+## Nacional
+
+grmr_grafico <- ggplot(correlacao, aes(x = mr_10, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Mobility Rate: ', mr_10,
+                          '<br>Growth Rate:', Growth_Rate))) +
+  geom_smooth(method = "lm", color = "black", se = FALSE, formula = y~x, size = 0.7) +
   stat_poly_eq(formula = y~x, 
                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
                parse = TRUE) +  
-  ylim(0, 2) +
-  labs(x = "Mobility Rate",
-       y = "Growth Rate")
+  ylim(0, 1.5) +
+  labs(title = "Relação entre Mobility Rate e Growth Rate para Lag de 10 dias",
+       x = "Mobility Rate",
+       y = "Growth Rate") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+
+ggplotly(grmr_grafico, tooltip = "text")
+
+
+## Por distrito
 
 
 
-# EVOLUCAO DO GROWTH RATE
 
-ggplot(correlacao, aes(x = data, y = Growth_Rate)) +
-  geom_point() +
-  geom_smooth(color = "black", se = FALSE, formula = y~x) +
-  ylim(0, 2) +
-  labs(x = "Mês",
-       y = "Growth Rate")
+# EVOLUCAO DO GROWTH RATE (B)
+
+## Nacional
+
+gr_evolucao_grafico <- ggplot(correlacao, aes(x = data, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                              '<br>Growth Rate:', Growth_Rate))) +
+  geom_smooth(color = "black", se = FALSE, formula = y~x, size = 0.7) +
+  ylim(0, 2) + # ver se isto pode ser mesmo aplicado
+  labs(title = "Evolução do Growth Ratio",
+       x = "Mês",
+       y = "Growth Rate") +
+  scale_x_date(breaks = "months", date_labels = "%b")
+  
+
+ggplotly(gr_evolucao_grafico, tooltip = "text")
+
+## Por distrito
 
 
-# EVOLUCAO MEDIA DOS ULTIMOS 3 DIAS 
+
+
+
+# EVOLUCAO MEDIA DOS ULTIMOS 3 DIAS (D)
+
+## Nacional
 
 rollmean_3_nacional <- as.data.frame(cbind(covid19pt[3:nrow(covid19pt),1], as.data.frame(rollmean(covid19pt[,12], k=3))))
 
-ggplot(rollmean_3_nacional, aes(x = data, y = confirmados_novos)) + 
-  geom_point() +
-  geom_smooth(color = "black", se = FALSE, formula = y~x) +
-  labs(x = "Mês",
-       y = "Média Rolante Casos dos Últimos 3 dias")
+rollmean_3_nacional_grafico <- ggplot(rollmean_3_nacional, aes(x = data, y = confirmados_novos)) + 
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                                          '<br>Novos casos (Média):', confirmados_novos))) +
+  geom_smooth(color = "black", se = FALSE, formula = y~x, size = 0.7) +
+  labs(title = "Evolução dos Novos Casos (Média dos Últimos 3 dias)",
+       x = "Mês",
+       y = "Novos Casos (Média dos Últimos 3 dias)") +
+  scale_x_date(breaks = "months", date_labels = "%b")
 
-  
-
-
-
-
-
+ggplotly(rollmean_3_nacional_grafico, tooltip = "text")
 
 
+## Por distrito
 
 
-
-# CÁLCULO DO LAG COM BASE NA CORRELACAO DO MOBILITY RATE COM O GROWTH RATIO PARA DIA 10-10-2020 (não fazer divisão mas sim correlacao glm(gr~mr) 
-# para vários dias)
-
-## Criar uma tabela com uma coluna para as datas até 30 dias antes do maior pico da pandemia (dia 10-10-2020) e outra coluna com os 
-## valores da mobility rate
-correlacao_lag <- mobilidade_nacional %>%
-  filter(Data >= "2020-09-10" & Data <= "2020-10-10") %>% 
-  mutate(correlacao_lag = mobilidade_nacional / gr[222, 2]) %>% 
-  cbind(as.data.frame(30:6))
-names(correlacao_lag)[4] = "Lag"
-
-correlacao_lag_grafico <- ggplot(correlacao_lag, aes(x = Lag, y = correlacao_lag)) +
-  geom_point() +
-  geom_line(color = "coral2") +
-  labs(y = "Correlação MR e GR")
-
-ggplotly(correlacao_lag_grafico)
-
-# CORRELACAO DO MOBILITY RATE COM O GROWTH RATIO
-correlacao <- merge(mobilidade_nacional, gr, by = "Data")
-
-correlacao <- correlacao %>%
-  mutate(correlacao = mobilidade_nacional / Growth_Rate)
