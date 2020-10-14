@@ -9,10 +9,14 @@ library(htmltools)
 library(ggplot2)
 library(plotly)
 library(stringdist)
+library(Ecfun)
+library(tibble)
+library(ggpmisc)
+library(corrr)
 
 
 # IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
-mobilidade_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-04.txt")
+mobilidade_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
 
 mobilidade_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-06.txt")
 
@@ -212,7 +216,7 @@ ggplotly(mobilidade_grafico, tooltip = "text")
 
 gr <- as.data.frame(cbind(covid19pt[7:nrow(covid19pt),1], as.data.frame(log(rollmean(covid19pt[5:nrow(covid19pt),12], k=3))
                                                                         /log(rollmean(covid19pt[,12], k = 7)))))
-names(gr) <- c("Data", "Growth_Rate")
+names(gr) <- c("data", "Growth_Rate")
 
 
 ## gr por distrito
@@ -220,11 +224,155 @@ names(gr) <- c("Data", "Growth_Rate")
 ### Tabela com coluna para data, coluna para concelho e outra para mobility rate
 covid_concelhos_melt <- melt(covid_concelhos, id.vars = "data")
 
+### Por tudo em letras maiúsculas na base de dados concelho_distrito
+concelho_distrito$`DesignaÃ§Ã£o CC` = toupper(concelho_distrito$`DesignaÃ§Ã£o CC`)
+
+### Remover concelhos repetidos
+concelho_distrito <- unique(concelho_distrito)
+
 ### Juntar tabela anterior a tabela que associa os concelhos ao distrito de forma a poder calcular o mobility rate por distrito
-i <- as.data.frame(amatch(covid_concelhos_melt$variable, concelho_distrito$`DesignaÃ§Ã£o CC`, maxDist = 2))
-covid_concelhos_melt$match[!is.na(i)] <- concelho_distrito$`DesignaÃ§Ã£o CC`[i[!is.na(i)]]
+names(covid_concelhos_melt) = c("data", "concelho_melt", "incidencia")
+names(concelho_distrito) = c("distrito", "concelho")
+
+i <- amatch(covid_concelhos_melt$concelho_melt, concelho_distrito$concelho, maxDist = 2)
+covid_concelhos_melt$match[!is.na(i)] <- concelho_distrito$concelho[i[!is.na(i)]]
+
+names(covid_concelhos_melt)[4] = "concelho"
+
+covid_concelho_distrito <- left_join(covid_concelhos_melt, concelho_distrito, by = "concelho")
+
+### Corrigir nomes de distritos em falta
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ANGRA DO HEROÃSMO" | 
+                                   covid_concelho_distrito$concelho_melt == "CALHETA (AÃ‡ORES)" |
+                                   covid_concelho_distrito$concelho_melt == "CORVO" |
+                                   covid_concelho_distrito$concelho_melt == "HORTA" |
+                                   covid_concelho_distrito$concelho_melt == "LAGOA" |
+                                   covid_concelho_distrito$concelho_melt == "LAJES DAS FLORES" |
+                                   covid_concelho_distrito$concelho_melt == "LAJES DO PICO" |
+                                   covid_concelho_distrito$concelho_melt == "MADALENA" |
+                                   covid_concelho_distrito$concelho_melt == "NORDESTE" |
+                                   covid_concelho_distrito$concelho_melt == "PONTA DELGADA" |
+                                   covid_concelho_distrito$concelho_melt == "POVOAÃ‡ÃƒO" |
+                                   covid_concelho_distrito$concelho_melt == "RIBEIRA GRANDE" |
+                                   covid_concelho_distrito$concelho_melt == "SANTA CRUZ DA GRACIOSA" |
+                                   covid_concelho_distrito$concelho_melt == "SANTA CRUZ DAS FLORES" |
+                                   covid_concelho_distrito$concelho_melt == "SÃƒO ROQUE DO PICO" |
+                                   covid_concelho_distrito$concelho_melt == "VELAS" |
+                                   covid_concelho_distrito$concelho_melt == "VILA DA PRAIA DA VITÃ“RIA" |
+                                   covid_concelho_distrito$concelho_melt == "VILA DO PORTO" |
+                                   covid_concelho_distrito$concelho_melt == "VILA FRANCA DO CAMPO"] = "Acores"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "CALHETA" |
+                                   covid_concelho_distrito$concelho_melt == "CÃ‚MARA DE LOBOS" |
+                                   covid_concelho_distrito$concelho_melt == "FUNCHAL" |
+                                   covid_concelho_distrito$concelho_melt == "MACHICO" |
+                                   covid_concelho_distrito$concelho_melt == "PONTA DO SOL" |
+                                   covid_concelho_distrito$concelho_melt == "PORTO MONIZ" |
+                                   covid_concelho_distrito$concelho_melt == "PORTO SANTO" |
+                                   covid_concelho_distrito$concelho_melt == "RIBEIRA BRAVA" |
+                                   covid_concelho_distrito$concelho_melt == "SANTA CRUZ" |
+                                   covid_concelho_distrito$concelho_melt == "SANTANA" |
+                                   covid_concelho_distrito$concelho_melt == "SÃƒO VICENTE"] = "Madeira"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ALCOBAÃ‡A" |
+                                   covid_concelho_distrito$concelho_melt == "FIGUEIRÃ“ DOS VINHOS" |
+                                   covid_concelho_distrito$concelho_melt == "NAZARÃ‰" |
+                                   covid_concelho_distrito$concelho_melt == "PEDRÃ“GÃƒO GRANDE" |
+                                   covid_concelho_distrito$concelho_melt == "PORTO DE MÃ“S"] = "Leiria"
 
 
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ALFÃ‚NDEGA DA FÃ‰" | 
+                                   covid_concelho_distrito$concelho_melt == "BRAGANÃ‡A" |
+                                   covid_concelho_distrito$concelho_melt == "FREIXO DE ESPADA Ã€ CINTA"] = "Braganca"
+
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ALIJÃ“" |
+                                   covid_concelho_distrito$concelho_melt == "MURÃ‡A" |
+                                   covid_concelho_distrito$concelho_melt == "PESO DA RÃ‰GUA" |
+                                   covid_concelho_distrito$concelho_melt == "VALPAÃ‡OS"] = "Vila Real"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ALMODÃ”VAR" |
+                                   covid_concelho_distrito$concelho_melt == "MÃ‰RTOLA"] = "Beja"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ALPIARÃ‡A" |
+                                   covid_concelho_distrito$concelho_melt == "CONSTÃ‚NCIA" |
+                                   covid_concelho_distrito$concelho_melt == "MAÃ‡ÃƒO" |
+                                   covid_concelho_distrito$concelho_melt == "OURÃ‰M" |
+                                   covid_concelho_distrito$concelho_melt == "SANTARÃ‰M"] = "Santarem"
+
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "GRÃ‚NDOLA" |
+                                 covid_concelho_distrito$concelho_melt == "SANTIAGO DO CACÃ‰M"] = "Setubal"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "GÃ“IS"] = "Coimbra"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "LAGOA (FARO)" |
+                                   covid_concelho_distrito$concelho_melt == "LOULÃ‰" |
+                                   covid_concelho_distrito$concelho_melt == "SÃƒO BRÃS DE ALPORTEL" |
+                                   covid_concelho_distrito$concelho_melt == "VILA REAL DE SANTO ANTÃ“NIO"] = "Faro"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "MELGAÃ‡O" |
+                                   covid_concelho_distrito$concelho_melt == "MONÃ‡ÃƒO" |
+                                   covid_concelho_distrito$concelho_melt == "VALENÃ‡A"] = "Viana do Castelo"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "OLIVEIRA DE AZEMÃ‰IS" |
+                                   covid_concelho_distrito$concelho_melt == "SÃƒO JOÃƒO DA MADEIRA"] = "Aveiro"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "PAÃ‡OS DE FERREIRA" |
+                                   covid_concelho_distrito$concelho_melt == "PÃ“VOA DE VARZIM"] = "Porto"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "PROENÃ‡A-A-NOVA" |
+                                   covid_concelho_distrito$concelho_melt == "VILA VELHA DE RÃ“DÃƒO"] = "Castelo Branco"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "PÃ“VOA DE LANHOSO"] = "Braga"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SOBRAL DE MONTE AGRAÃ‡O"] = "Lisboa"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SÃTÃƒO" |
+                                   covid_concelho_distrito$concelho_melt == "SÃƒO JOÃƒO DA PESQUEIRA" |
+                                   covid_concelho_distrito$concelho_melt == "TABUAÃ‡O"] = "Viseu"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "VILA NOVA DE FOZ CÃ”A"] = "Guarda"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "VILA VIÃ‡OSA"] = "Evora"
+
+
+### Corrigir nome dos distritos que não estão bem escritos
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "SantarÃ©m"] <- "Santarem"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "Ã‰vora"] <- "Evora"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "SetÃºbal"] <- "Setubal"
+
+covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "BraganÃ§a"] <- "Braganca"
+
+### Calcular o numero de casos por distrito somando o número de casos dos concelhos desse distrito por dia
+
+incidencia_distrito <- covid_concelho_distrito %>% 
+  group_by(distrito, data) %>% 
+  summarise(incidencia = sum(incidencia, na.rm = TRUE))
+
+incidencia_distrito = incidencia_distrito[c("data", "distrito", "incidencia")]
+
+
+### Mudar a coluna da data de character para data
+
+incidencia_distrito$data <- as.Date(as.character(incidencia_distrito$data),format = "%d-%m-%Y")
+
+
+### Criar tabela sem melt, ou seja, com uma coluna para cada distrito
+incidencia_distrito_unmelt <- dcast(incidencia_distrito, data~distrito, value.var = "incidencia")
+
+
+### Calculo dos casos diários para o intervalo de tempo em que temos o numero de casos acumulados por dia 
+incidencia_distrito_lag <- incidencia_distrito_unmelt[2:105, 2:21] - incidencia_distrito_unmelt[1:104, 2:21]
+
+
+### Calcular o growth rate tal como fizemos para Portugal
+gr_distritos <- as.data.frame(cbind(incidencia_distrito_unmelt[8:105,1], 
+                                    as.data.frame(log(rollapply(incidencia_distrito_lag[5:nrow(incidencia_distrito_lag), 1:20], 3, mean))
+                                                  /log(rollapply(incidencia_distrito_lag[, 1:20], 7, mean)))))
 
 
 # CÁLCULO DO LAG (dias de desfasamento do efeito da mobilidade no numero de casos de covid19)
@@ -239,29 +387,159 @@ mobilidade_pt %>%
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # MOBILITY RATE NACIONAL POR DIA (feito com média de cada distrito o que não é o melhor)
 
-mobilidade_nacional <- mobilidade_pt %>% 
-  group_by(ds) %>%
-  mutate(mobilidade_nacional = mean(all_day_bing_tiles_visited_relative_change)) %>% 
-  distinct(ds, mobilidade_nacional)
-names(mobilidade_nacional)[1] = "Data"
+## Dados do numero de pessoas por distrito disponiveis em <https://pt.db-city.com/Portugal>
 
+pop_guarda = 176086
+pop_leiria = 472895
+pop_lisboa = 2203503
+pop_madeira = 244286
+pop_portalegre = 121653
+pop_porto = 1805015
+pop_santarem = 463676
+pop_setubal = 829007
+pop_vianadocastelo = 251937
+pop_vilareal = 221218
+pop_aveiro = 727041
+pop_viseu = 395202
+pop_acores = 241206
+pop_beja = 156259
+pop_braga = 851337
+pop_braganca = 280180
+pop_castelobranco = 203769
+pop_coimbra = 437642
+pop_evora = 171130
+pop_faro = 411468
+  
+## Selecionar na tabela da mobilidade as colunas da data, distrito e mobilidade
+
+mobilidade_distritos <- mobilidade_pt %>% 
+  select(ds, polygon_name, all_day_bing_tiles_visited_relative_change)
+names(mobilidade_distritos) = c("data", "distrito", "mobilidade")
+
+
+## Tabela com a populacao por distrito
+
+pop_distritos <- data.frame(distrito = c("Guarda", "Leiria", "Lisboa", "Madeira", "Portalegre", "Porto", "Santarem", "Setubal", 
+                                         "Viana do Castelo","Vila Real", "Aveiro", "Viseu", "Azores", "Beja", "Braga", "Braganca", 
+                                         "Castelo Branco", "Coimbra", "Evora", "Faro"), 
+                            populacao = c(pop_guarda, pop_leiria , pop_lisboa, pop_madeira, pop_portalegre, pop_porto, pop_santarem, 
+                                          pop_setubal, pop_vianadocastelo,pop_vilareal, pop_aveiro, pop_viseu, pop_acores, pop_beja, 
+                                          pop_braga, pop_braganca, pop_castelobranco, pop_coimbra, pop_evora,pop_faro))
+
+
+##Juntar as duas tabelas anteriores pelo distrito
+
+mobilidade_distritos <- left_join(mobilidade_distritos, pop_distritos, by = "distrito")
+
+
+## Nova coluna com a multiplicacao da mobilidade pela populacao de cada distrito (para a media ponderada)
+
+mobilidade_distritos <- mobilidade_distritos %>% 
+  mutate(mobilidadexpopulacao = mobilidade * populacao)
+
+
+## Tabela com a media ponderada do mobility rate nacional por dia (soma das multiplicacoes anteriores a dividir pela populacao de Portugal)
+  
+mobilidade_nacional <- mobilidade_distritos %>% 
+  group_by(data) %>% 
+  summarise(mobilidade_ponderada = sum(mobilidadexpopulacao) / sum(pop_distritos$populacao))
+
+
+mobilidade_nacional$data <- as.Date(mobilidade_nacional$data,format = "%d-%m-%Y")
+
+# CÁLCULO DO LAG UTILIZANDO A CORRELACAO ENTRE GROWTH RATIO NACIONAL E A MONILITY RATE NACIONAL
+
+## Fazer uma tabela com data, growth rate nacional e mobilidade nacional
+
+correlacao <- left_join(gr, mobilidade_nacional, by = "data")
+
+
+## Criar variavel com valores do 0 ao 30
+
+lags <- seq(30)
+
+
+## Atribuir nome a cada futura coluna comecando com mr_ tendo depois o numero respetivo
+
+lag_names <- paste("mr", formatC(lags, width = nchar(max(lags))), 
+                   sep = "_")
+
+## Funcao para fazer com que cada coluna seja a coluna anterior descendo uma linha
+
+lag_functions <- setNames(paste("lag(., ", lags, ")"), lag_names)
+
+
+## Adicionar as colunas anteriores a tabela correlacao
+
+correlacao <- correlacao %>% 
+  mutate_at(vars(mobilidade_ponderada), funs_(lag_functions))
+
+ 
+## Calcular a Generalized Linear Regression (glm) entre growth rate nacional e mobility rate nacional para cada lag
+
+### Com gaussian
+
+glm <- as.data.frame(coefficients(glm(Growth_Rate ~ ., family = "gaussian", data = correlacao))[c(-1, -2)]) %>% 
+  rownames_to_column(var = "Lag")
+glm[1] = 0:30
+names(glm)[2] = "coeficiente"
+
+
+### Com pearson
+
+coeficientes <- correlacao[-1] %>% 
+  correlate() %>% 
+  focus(Growth_Rate)
+coeficientes[1] = 0:30
+names(coeficientes) = c("Lag", "coeficiente")
+
+
+## Fazer um grafico com lag no eixo do x e o coeficiente de correlacao no eixo do y
+## Com este grafico concluimos que o lag se deve situar entre 16 e 18 com o valor otimo de 17
+
+ggplot(coeficientes, aes(x = Lag, y = coeficiente)) +
+  geom_point() +
+  geom_line()
+
+
+
+# GROWTH RATE POR MOBILITY RATE COM LAG 17
+
+ggplot(correlacao, aes(x = mr_17, y = Growth_Rate)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "black", se = FALSE, formula = y~x) +
+  stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE) +  
+  ylim(0, 2) +
+  labs(x = "Mobility Rate",
+       y = "Growth Rate")
+
+
+
+# EVOLUCAO DO GROWTH RATE
+
+ggplot(correlacao, aes(x = data, y = Growth_Rate)) +
+  geom_point() +
+  geom_smooth(color = "black", se = FALSE, formula = y~x) +
+  ylim(0, 2) +
+  labs(x = "Mês",
+       y = "Growth Rate")
+
+
+# EVOLUCAO MEDIA DOS ULTIMOS 3 DIAS 
+
+rollmean_3_nacional <- as.data.frame(cbind(covid19pt[3:nrow(covid19pt),1], as.data.frame(rollmean(covid19pt[,12], k=3))))
+
+ggplot(rollmean_3_nacional, aes(x = data, y = confirmados_novos)) + 
+  geom_point() +
+  geom_smooth(color = "black", se = FALSE, formula = y~x) +
+  labs(x = "Mês",
+       y = "Média Rolante Casos dos Últimos 3 dias")
+
+  
 
 # CÁLCULO DO LAG COM BASE NA CORRELACAO DO MOBILITY RATE COM O GROWTH RATIO PARA DIA 10-10-2020 (não fazer divisão mas sim correlacao glm(gr~mr) 
 # para vários dias)
