@@ -21,23 +21,23 @@ mobilidade_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculd
 mobilidade_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-06.txt")
 
 
-# IMPORTAR BASE DE DADOS DO COVID19 EM PORTUGAL
+# IMPORTAR BASE DE DADOS DO COVID19 EM PORTUGAL DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
 covid19pt <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data.csv")
 
 ## por as datas em formato data
 covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 
 
-# IMPORTAR BASE DE DADOS DOS CASOS POR CONCELHO
+# IMPORTAR BASE DE DADOS DOS CASOS POR CONCELHO DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
 covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv")
 
 
-# IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS
+# IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
 concelho_distrito <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/DistritosConcelhosFreguesias_CAOP2013_Populacao_Censos2011.csv") %>% 
   select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
 
 
-# IMPORTAR MAPA DOS DISTRITOS DE PORTUGAL DISPONIVEIS  EM: https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json
+# IMPORTAR MAPA DOS DISTRITOS DE PORTUGAL DISPONIVEIS  EM: <https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json>
 mapa_distritos <- geojson_read("https://raw.githubusercontent.com/ufoe/d3js-geojson/master/Portugal.json", what = "sp")
 
 
@@ -536,6 +536,15 @@ ggplot(rollmean_3_nacional, aes(x = data, y = confirmados_novos)) +
        y = "Média Rolante Casos dos Últimos 3 dias")
 
   
+
+
+
+
+
+
+
+
+
 
 # CÁLCULO DO LAG COM BASE NA CORRELACAO DO MOBILITY RATE COM O GROWTH RATIO PARA DIA 10-10-2020 (não fazer divisão mas sim correlacao glm(gr~mr) 
 # para vários dias)
