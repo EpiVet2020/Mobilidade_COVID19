@@ -18,30 +18,26 @@ library(corrr)
 # IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
 mobilidade_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
 
-mobilidade_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-06.txt")
+mobilidade_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
 
 
-# IMPORTAR BASE DE DADOS DO COVID19 EM PORTUGAL
+# IMPORTAR BASE DE DADOS DO COVID19 EM PORTUGAL DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
 covid19pt <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data.csv")
 
 ## por as datas em formato data
 covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 
 
-<<<<<<< HEAD
-# MAPA DOS DISTRITOS DE PORTUGAL BASE DE DADOS DISPONIVEIS  EM: https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json
-=======
-# IMPORTAR BASE DE DADOS DOS CASOS POR CONCELHO
+# IMPORTAR BASE DE DADOS DOS CASOS POR CONCELHO DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
 covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv")
 
 
-# IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS
-concelho_distrito <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/DistritosConcelhosFreguesias_CAOP2013_Populacao_Censos2011.csv") %>% 
+# IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
+concelho_distrito <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/DistritosConcelhosFreguesias_CAOP2013_Populacao_Censos2011.csv") %>% 
   select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
 
 
-# IMPORTAR MAPA DOS DISTRITOS DE PORTUGAL DISPONIVEIS  EM: https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json
->>>>>>> 9d961de57358fda34b33f0f02dfc37e7d191161f
+# IMPORTAR MAPA DOS DISTRITOS DE PORTUGAL DISPONIVEIS  EM: <https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json>
 mapa_distritos <- geojson_read("https://raw.githubusercontent.com/ufoe/d3js-geojson/master/Portugal.json", what = "sp")
 
 
@@ -49,7 +45,7 @@ mapa_distritos <- geojson_read("https://raw.githubusercontent.com/ufoe/d3js-geoj
 # TRATAR BASE DE DADOS DA MOBILIDADE
 
 ## Selecionar Portugal na base de dados
-mobilidade_pt <- mobilidade_r %>% 
+mobilidade_pt <- mobilidade_c %>% 
   filter(country=="PRT")
 
 ## Corrigir os nomes dos distritos
@@ -308,7 +304,7 @@ covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "GÃ�
 
 covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "LAGOA (FARO)" |
                                    covid_concelho_distrito$concelho_melt == "LOULÃ‰" |
-                                   covid_concelho_distrito$concelho_melt == "SÃƒO BRÃS DE ALPORTEL" |
+                                   covid_concelho_distrito$concelho_melt == "SÃƒO BRÃ.S DE ALPORTEL" |
                                    covid_concelho_distrito$concelho_melt == "VILA REAL DE SANTO ANTÃ“NIO"] = "Faro"
 
 covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "MELGAÃ‡O" |
@@ -328,7 +324,7 @@ covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "PÃ�
 
 covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SOBRAL DE MONTE AGRAÃ‡O"] = "Lisboa"
 
-covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SÃTÃƒO" |
+covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SÃ.TÃƒO" |
                                    covid_concelho_distrito$concelho_melt == "SÃƒO JOÃƒO DA PESQUEIRA" |
                                    covid_concelho_distrito$concelho_melt == "TABUAÃ‡O"] = "Viseu"
 
@@ -486,6 +482,10 @@ glm <- as.data.frame(coefficients(glm(Growth_Rate ~ ., family = "gaussian", data
 glm[1] = 0:30
 names(glm)[2] = "coeficiente"
 
+ggplot(glm, aes(x=Lag, y=coeficiente)) +
+  geom_line()+
+  geom_point()
+
 
 ### Com pearson
 
@@ -540,6 +540,15 @@ ggplot(rollmean_3_nacional, aes(x = data, y = confirmados_novos)) +
        y = "Média Rolante Casos dos Últimos 3 dias")
 
   
+
+
+
+
+
+
+
+
+
 
 # CÁLCULO DO LAG COM BASE NA CORRELACAO DO MOBILITY RATE COM O GROWTH RATIO PARA DIA 10-10-2020 (não fazer divisão mas sim correlacao glm(gr~mr) 
 # para vários dias)
