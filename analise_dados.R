@@ -19,8 +19,6 @@ covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 
 
 # MAPA DOS DISTRITOS DE PORTUGAL BASE DE DADOS DISPONIVEIS  EM: https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json
-
-
 mapa_distritos <- geojson_read("https://raw.githubusercontent.com/ufoe/d3js-geojson/master/Portugal.json", what = "sp")
 
 
