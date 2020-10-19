@@ -1,0 +1,805 @@
+---
+title: "Influência da Mobilidade nos Novos Casos de COVID19"
+author: "Carolina e Raquel"
+date: "15/10/2020"
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+    theme: lumen
+    toc: yes
+    toc_depth: 3
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  html_notebook:
+    code_folding: hide
+    theme: lumen
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+editor_options: 
+  chunk_output_type: inline
+---
+```{css, echo=FALSE}
+/* Whole document: */
+body{
+  font-size: 12pt;
+}
+```
+
+<br>
+
+## **Introdução**
+***
+
+Com esta análise temos como objetivo responder à questão *De que forma a mobilidade está associada à ocorrência de novos casos?* 
+
+Deste modo, queremos perceber se o movimento de pessoas está associado a um aumento do número de casos de COVID19 quer a nível nacional, quer a nível distrital.
+
+Para esta análise baseámo-nos na metodologia usada pelo artigo do *The Lancet* <https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1>. 
+
+Para obtermos os dados da movimentação da população por distrito em Portugal, recorremos à base de dados disponível em <https://data.humdata.org/dataset/movement-range-maps> cuja explicação das fórmulas utilizadas se encontra em <https://research.fb.com/blog/2020/06/protecting-privacy-in-facebook-mobility-data-during-the-covid-19-response/>. Relativamente aos dados da taxa de crescimento de novos casos utilizámos a base de dados disponível em <https://github.com/dssg-pt/covid19pt-data>.
+
+
+```{r warning=FALSE, message=FALSE}
+# IMPORTAR LIBRARIES
+library(data.table)
+library(dplyr)
+library(zoo)
+library(geojsonio)
+library(leaflet)
+library(htmlwidgets)
+library(htmltools)
+library(ggplot2)
+library(plotly)
+library(stringdist)
+library(Ecfun)
+library(tibble)
+library(ggpmisc)
+library(corrr)
+
+
+# IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
+#mobilidade_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
+
+mobilidade_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
+
+
+# IMPORTAR BASE DE DADOS DO COVID19 EM PORTUGAL DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
+covid19pt <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data.csv")
+
+## por as datas em formato data
+covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
+
+
+# IMPORTAR BASE DE DADOS DOS CASOS POR CONCELHO DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
+covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv")
+
+
+# IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
+concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AQ6V32PELDZ522FEEDECY7S7RDCSW") %>% 
+  select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
+
+
+# IMPORTAR MAPA DOS DISTRITOS DE PORTUGAL DISPONIVEIS  EM: <https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json>
+mapa_distritos <- geojson_read("https://raw.githubusercontent.com/ufoe/d3js-geojson/master/Portugal.json", what = "sp")
+
+```
+
+## **Taxa de Mobilidade (MR)** {.tabset .tabset-fade .tabset-pills}
+***
+A base de dados da mobilidade apresenta valores entre -1 e 1. Os valores negativos indicam uma diminuição da movimentação de pessoas em Portugal quando comparado com um dia padrão antes do início da pandemia (fevereiro) e os valores positivos indicam um aumento dessa movimentação. 
+
+No artigo *The Lancet* os valores da mobilidade variam entre 0 e >1. O valor 0 indica que não houve movimentações, 0.5 significa que foram feitas metade das movimentações em relação ao padrão, 1 indica que não houve alteração no número de movimentações em relação ao padrão e >1 significa que o número de movimentações aumentou. 
+
+Para os nossos dados terem o mesmo intervalo do que o do artigo, decidimos normalizar os nossos dados somando 1.  
+
+```{r warning=FALSE, message=FALSE}
+# TRATAR BASE DE DADOS DA MOBILIDADE
+
+## Selecionar Portugal na base de dados
+mobilidade_pt <- mobilidade_c %>% 
+  filter(country=="PRT")
+
+## Corrigir os nomes dos distritos
+mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "Santar-m" | mobilidade_pt$polygon_name == "SantarÃ©m"] <- "Santarem"
+
+mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "Set-bal" | mobilidade_pt$polygon_name == "SetÃºbal"] <- "Setubal"
+
+mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "Bragan-a" | mobilidade_pt$polygon_name == "BraganÃ§a"] <- "Braganca"
+
+mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "-vora" | mobilidade_pt$polygon_name == "Ã‰vora"] <- "Evora"
+
+## Normalizar mobility rate para que o 0 passe a representar a ausência de mobilidade
+mobilidade_pt$all_day_bing_tiles_visited_relative_change = mobilidade_pt$all_day_bing_tiles_visited_relative_change + 1
+```
+
+### Evolução Nacional
+
+Uma vez que apenas temos a taxa de mobilidade por distrito, recorremos à média ponderada para obter a taxa de mobilidade diária nacional.
+
+```{r warning=FALSE, message=FALSE}
+
+# Dados do numero de pessoas por distrito disponiveis em <https://pt.db-city.com/Portugal>
+
+pop_guarda = 176086
+pop_leiria = 472895
+pop_lisboa = 2203503
+pop_madeira = 244286
+pop_portalegre = 121653
+pop_porto = 1805015
+pop_santarem = 463676
+pop_setubal = 829007
+pop_vianadocastelo = 251937
+pop_vilareal = 221218
+pop_aveiro = 727041
+pop_viseu = 395202
+pop_acores = 241206
+pop_beja = 156259
+pop_braga = 851337
+pop_braganca = 280180
+pop_castelobranco = 203769
+pop_coimbra = 437642
+pop_evora = 171130
+pop_faro = 411468
+
+# Selecionar na tabela da mobilidade as colunas da data, distrito e mobilidade
+
+mobilidade_distritos <- mobilidade_pt %>% 
+  select(ds, polygon_name, all_day_bing_tiles_visited_relative_change)
+names(mobilidade_distritos) = c("data", "distrito", "mobilidade")
+
+
+# Tabela com a populacao por distrito
+
+pop_distritos <- data.frame(distrito = c("Guarda", "Leiria", "Lisboa", "Madeira", "Portalegre", "Porto", "Santarem", "Setubal", 
+                                         "Viana do Castelo","Vila Real", "Aveiro", "Viseu", "Azores", "Beja", "Braga", "Braganca", 
+                                         "Castelo Branco", "Coimbra", "Evora", "Faro"), 
+                            populacao = c(pop_guarda, pop_leiria , pop_lisboa, pop_madeira, pop_portalegre, pop_porto, pop_santarem, 
+                                          pop_setubal, pop_vianadocastelo,pop_vilareal, pop_aveiro, pop_viseu, pop_acores, pop_beja, 
+                                          pop_braga, pop_braganca, pop_castelobranco, pop_coimbra, pop_evora,pop_faro))
+
+
+#Juntar as duas tabelas anteriores pelo distrito
+
+mobilidade_distritos <- left_join(mobilidade_distritos, pop_distritos, by = "distrito")
+
+
+# Nova coluna com a multiplicacao da mobilidade pela populacao de cada distrito (para a media ponderada)
+
+mobilidade_distritos <- mobilidade_distritos %>% 
+  mutate(mobilidadexpopulacao = mobilidade * populacao)
+
+
+# Tabela com a media ponderada do mobility rate nacional por dia (soma das multiplicacoes anteriores a dividir pela populacao de Portugal)
+
+mobilidade_nacional <- mobilidade_distritos %>% 
+  group_by(data) %>% 
+  summarise(mobilidade_ponderada = sum(mobilidadexpopulacao) / sum(pop_distritos$populacao))
+
+
+mobilidade_nacional$data <- as.Date(mobilidade_nacional$data,format = "%d-%m-%Y")
+
+# Grafico da evolucao da taxa de mobilidade nacional
+
+mobilidade_nacional_grafico <- ggplot(mobilidade_nacional, aes(x = data, y = mobilidade_ponderada)) +
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                                           '<br>Taxa de Mobilidade:', mobilidade_ponderada))) +
+  geom_smooth(se = FALSE, size = 0.7, color = "coral2") +
+  labs(title = "Evolução da Taxa de Mobilidade (MR) Nacional",
+       x = "Mês",
+       y = "MR") +
+  theme_classic() +
+  theme(legend.title = element_blank()) +
+  scale_x_date(breaks = "months", date_labels = "%b") +
+  geom_line(aes(y = 1, text = ""), size = 0.5, color = "black", linetype = "dotted")
+
+ggplotly(mobilidade_nacional_grafico, tooltip = "text")
+
+```
+
+
+### Evolução Distrital {.tabset}
+
+De modo a percebermos a evolução da mobilidade em Portugal, decidimos fazer três mapas em três situações epidemiológicas distintas.
+
+#### Mapa dia 01-03-2020
+
+Começámos por fazer um mapa da mobilidade antes do início da pandemia em Portugal, tendo para isso escolhido o dia 01-03-2020 por ser a primeira data que temos na nossa base de dados.
+
+```{r warning=FALSE, message=FALSE}
+# MAPA DA MOBILIDADE POR DISTRITOS
+
+## Mapa do dia 2020-03-01 (antes da pandemia)
+
+### Selecionar todas as linhas do dia 2020-03-01
+mobilidade_pre_covid <- as.data.frame(with(mobilidade_pt, mobilidade_pt[(ds=="2020-03-01")]))
+
+### Ordenar os distritos pela mesma ordem do que as do mapa
+ordem <- c("Setubal", "Azores", "Madeira", "Aveiro", "Leiria", "Viana do Castelo", "Beja", "Evora", "Faro", "Lisboa", "Portalegre", "Santarem", "Braga", "Braganca", "Castelo Branco", "Coimbra", "Guarda", "Porto", "Viseu", "Vila Real")
+
+mobilidade_pre_covid_ordem <- mobilidade_pre_covid %>% 
+  slice(match(ordem,polygon_name))
+
+### Fazer uma palete de cores com 100 tonalidades e aplica-las ao intervalo entre 0.3 e 1.21 que sao o mínimo e o maximo do mobility rate
+palete <- colorRampPalette(colors = c("white", "yellow", "pink", "red"), space = "Lab")(100)
+
+pal_mobilidade_covid <-  colorNumeric(palete, domain = c(0.3, 1.21))
+
+### Criar legenda para quando se passa o rato por cima
+labels_mobilidade_pre_covid <- paste( 
+  "<strong>", mobilidade_pre_covid_ordem[,5],"</strong><br/>", 
+  mobilidade_pre_covid_ordem[,6], " <br/>", 
+  sep="") %>%
+  lapply(htmltools::HTML)
+
+### Criar o mapa com os valores por distrito
+leaflet(mapa_distritos) %>%
+  addPolygons(stroke = TRUE, smoothFactor = 0.3, fillOpacity = 1, color = "black", weight = 1,
+              fillColor = ~pal_mobilidade_covid(mobilidade_pre_covid_ordem$all_day_bing_tiles_visited_relative_change),
+              label = labels_mobilidade_pre_covid, 
+              labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
+  addTiles(group = "Normal") %>% 
+  addProviderTiles(providers$CartoDB.Positron, group = "Claro") %>% 
+  addProviderTiles(providers$CartoDB.DarkMatterNoLabels, group = "Escuro") %>% 
+  addLayersControl(
+    baseGroups = c("Normal", "Claro", "Escuro"),
+    options = layersControlOptions(collapsed = TRUE)
+  ) %>%
+  addLegend("bottomleft", pal = pal_mobilidade_covid, values = mobilidade_pre_covid_ordem$all_day_bing_tiles_visited_relative_change, 
+            opacity = 0.5, title = "Taxa de Mobilidade por distrito dia 01-03-2020")
+```
+
+#### Mapa dia 10-04-2020
+
+De seguida fizémos um mapa da mobilidade para um dia do período de quarentena em Portugal. 
+
+```{r warning=FALSE, message=FALSE}
+## Mapa do dia 2020-04-10 (em quarentena)
+
+### Selecionar todas as linhas do dia 2020-04-10
+mobilidade_covid_quarentena <- as.data.frame(with(mobilidade_pt, mobilidade_pt[(ds=="2020-04-10")]))
+
+### Ordenar os distritos pela mesma ordem do que as do mapa
+mobilidade_covid_quarentena_ordem <- mobilidade_covid_quarentena %>% 
+  slice(match(ordem,polygon_name))
+
+### Criar legenda para quando se passa o rato por cima
+labels_mobilidade_covid_quarentena <- paste( 
+  "<strong>", mobilidade_covid_quarentena_ordem[,5],"</strong><br/>", 
+  mobilidade_covid_quarentena_ordem[,6], " <br/>", 
+  sep="") %>%
+  lapply(htmltools::HTML)
+
+### Criar o mapa com os valores por distrito
+leaflet(mapa_distritos) %>%
+  addPolygons(stroke = TRUE, smoothFactor = 0.3, fillOpacity = 1, color = "black", weight = 1,
+              fillColor = ~pal_mobilidade_covid(mobilidade_covid_quarentena_ordem$all_day_bing_tiles_visited_relative_change),
+              label = labels_mobilidade_covid_quarentena, 
+              labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
+  addTiles(group = "Normal") %>% 
+  addProviderTiles(providers$CartoDB.Positron, group = "Claro") %>% 
+  addProviderTiles(providers$CartoDB.DarkMatterNoLabels, group = "Escuro") %>% 
+  addLayersControl(
+    baseGroups = c("Normal", "Claro", "Escuro"),
+    options = layersControlOptions(collapsed = TRUE)
+  ) %>%
+  addLegend("bottomleft", pal = pal_mobilidade_covid, values = mobilidade_covid_quarentena_ordem$all_day_bing_tiles_visited_relative_change, 
+            opacity = 0.5, title = "Taxa de Mobilidade por distrito dia 10-04-2020")
+
+```
+
+#### Mapa dia 14-09-2020
+
+Por fim realizámos um mapa da mobilidade no primeiro dia de aulas em Portugal.
+
+```{r warning=FALSE, message=FALSE}
+## Mapa do dia 2020-09-14 (regresso às aulas)
+
+### Selecionar todas as linhas do dia 2020-09-14
+mobilidade_covid_aulas <- as.data.frame(with(mobilidade_pt, mobilidade_pt[(ds=="2020-09-14")]))
+
+### Ordenar os distritos pela mesma ordem do que as do mapa
+mobilidade_covid_aulas_ordem <- mobilidade_covid_aulas %>% 
+  slice(match(ordem,polygon_name))
+
+### Criar legenda para quando se passa o rato por cima
+labels_mobilidade_covid_aulas <- paste( 
+  "<strong>", mobilidade_covid_aulas_ordem[,5],"</strong><br/>", 
+  mobilidade_covid_aulas_ordem[,6], " <br/>", 
+  sep="") %>%
+  lapply(htmltools::HTML)
+
+### Criar o mapa com os valores por distrito
+leaflet(mapa_distritos) %>%
+  addPolygons(stroke = TRUE, smoothFactor = 0.3, fillOpacity = 1, color = "black", weight = 1,
+              fillColor = ~pal_mobilidade_covid(mobilidade_covid_aulas_ordem$all_day_bing_tiles_visited_relative_change),
+              label = labels_mobilidade_covid_aulas, 
+              labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
+  addTiles(group = "Normal") %>% 
+  addProviderTiles(providers$CartoDB.Positron, group = "Claro") %>% 
+  addProviderTiles(providers$CartoDB.DarkMatterNoLabels, group = "Escuro") %>% 
+  addLayersControl(
+    baseGroups = c("Normal", "Claro", "Escuro"),
+    options = layersControlOptions(collapsed = TRUE)
+  ) %>%
+  addLegend("bottomleft", pal = pal_mobilidade_covid, values = mobilidade_covid_aulas_ordem$all_day_bing_tiles_visited_relative_change, 
+            opacity = 0.5, title = "Taxa de Mobilidade por distrito dia 14-09-2020")
+
+```
+
+#### Mapa da Evolução
+
+
+
+```{r warning=FALSE, message=FALSE}
+
+```
+
+
+#### Gráfico da Evolução
+
+Com a análise deste gráfico podemos ver uma diminuição da mobilidade entre março e início de agosto em relação ao padrão. Esta diminuição é mais acentuada em abril e maio, o que corresponde ao período de quarentena. De seguida a mobilidade aumentou até início de setembro, sendo que a partir de agosto o valor é superior a 1, o que indica que a mobilidade foi maior do que a do padrão. Desde setembro a mobilidade tem vindo a diminuir, sendo que a partir de outubro se encontra abaixo do padrão.
+
+```{r warning=FALSE, message=FALSE}
+
+### Grafico com data no eixo do x, mobility rate no eixo do y e distrito nas cores das linhas
+
+mobilidade_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = all_day_bing_tiles_visited_relative_change, color = polygon_name)) +
+  geom_point(size = 0.7,  aes(text = paste('Distrito:', polygon_name,
+                                           '<br>Data: ', ds,
+                                           '<br>Taxa de Mobilidade:', all_day_bing_tiles_visited_relative_change))) +
+  geom_smooth(se = FALSE, size = 0.7) +
+  labs(title = "Evolução da Taxa de Mobilidade (MR) por Distrito",
+       x = "Mês",
+       y = "MR") +
+  theme_classic() +
+  theme(legend.title = element_blank()) +
+  scale_x_date(breaks = "months", date_labels = "%b") +
+  geom_line(aes(y = 1, text = ""), size = 0.5, color = "black", linetype = "dotted")
+
+ggplotly(mobilidade_grafico, tooltip = "text")
+```
+
+<br>
+
+## **Taxa de Crescimento de Novos Casos (GR)** {.tabset .tabset-fade .tabset-pills}
+***
+
+Para perceber se a mobilidade afeta o número de novos casos, tivemos de calcular a taxa de cresciemnto de novos casos. Segundo o *The Lancet*, a taxa de crescimento de novos casos calcula-se dividindo o logaritmo da média de novos casos dos últimos 3 dias pelo logaritmo da média de novos casos dos últimos 7 dias.
+
+
+### Nacional
+
+```{r warning=FALSE, message=FALSE}
+
+# Para isso, fizemos uma tabela com uma coluna para a data e outra coluna para a divisao. Para a data, começa na linha 7 porque e o primeiro dia em que temos registos dos 7 dias anteriores. Para o numerador tem de se comecar na linha 5 pois o primeiro valor que queremos e para a linha 7 e ele precisa das duas linhas anteriores para fazer a rollmean dos ultimos 3 dias. Para o demoninador nao precisamos de especificar onde queremos que comece porque ele so comeca quando tem 7 registos disponiveis
+
+gr <- as.data.frame(cbind(covid19pt[7:nrow(covid19pt),1], as.data.frame(log(rollmean(covid19pt[5:nrow(covid19pt),12], k=3))
+                                                                        /log(rollmean(covid19pt[,12], k = 7)))))
+names(gr) <- c("data", "Growth_Rate")
+
+# Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
+gr_evolucao_grafico <- ggplot(gr, aes(x = data, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                              '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(color = "coral2", se = FALSE, formula = y~x, size = 0.7) +
+  ylim(0, 2) + # ver se isto pode ser mesmo aplicado
+  labs(title = "Evolução da Taxa de Crescimento de Novos Casos (GR)",
+       x = "Mês",
+       y = "GR") +
+  theme(plot.title = element_text(size=11)) +
+  scale_x_date(breaks = "months", date_labels = "%b")
+  
+
+gr_evolucao_grafico_interativo <- ggplotly(gr_evolucao_grafico, tooltip = "text")
+
+
+# Grafico da evolucao da media de casos dos ultimos 3 dias
+
+rollmean_3_nacional <- as.data.frame(cbind(covid19pt[3:nrow(covid19pt),1], as.data.frame(rollmean(covid19pt[,12], k=3))))
+
+rollmean_3_nacional_grafico <- ggplot(rollmean_3_nacional, aes(x = data, y = confirmados_novos)) + 
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                                          '<br>Novos casos (Média):', confirmados_novos))) +
+  geom_smooth(color = "coral2", se = FALSE, formula = y~x, size = 0.7) +
+  labs(title = "Evolução dos Novos Casos (Média dos Últimos 3 dias)",
+       x = "Mês",
+       y = "Novos Casos (Média dos Últimos 3 dias)") +
+  theme(plot.title = element_text(size=11)) +
+  scale_x_date(breaks = "months", date_labels = "%b")
+
+rollmean_3_nacional_grafico_interativo <- ggplotly(rollmean_3_nacional_grafico, tooltip = "text")
+
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      rollmean_3_nacional_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      gr_evolucao_grafico_interativo
+    )
+  ))
+)
+```
+
+### Distrital
+
+```{r warning=FALSE, message=FALSE}
+
+```
+
+<br>
+<br>
+
+## **Determinação do Desfasamento Ótimo entre a Taxa de Mobilidade (MR) e a Taxa de Crescimento de Novos Casos (GR)** {.tabset .tabset-fade .tabset-pills}
+***
+
+A mobilidade não tem efeitos imediatos no número de novos casos. Assim, temos de perceber quanto tempo demora até à ocorrência de uma alteração nesse número. Para isso considerámos que, quando a correlação entre a taxa de mobilidade e a taxa de crescimento de novos casos é máxima, corresponde ao desfasamento ótimo.
+
+
+### Nacional {.tabset}
+
+
+#### Relação
+
+Tendo a taxa de mobilidade nacional e a taxa de crescimento de novos casos a nível nacional, realizámos um gráfico para cada desfasamento entre 0 e 30 dias, de modo a perceber como é que estas variáveis se relacionam. Pela análise dos gráficos é possível verificar que a reta que traça a tendência dos pontos tem declive próximo de zero. Isto significa que, apesar do aumento da taxa de mobilidade, a taxa de crescimento de novos casos praticamente não se altera.
+
+
+```{r warning=FALSE, message=FALSE, fig.height=10, fig.width=12}
+
+# Fazer uma tabela com data, growth rate nacional e mobilidade nacional
+
+gr_mr_lag <- left_join(gr, mobilidade_nacional, by = "data")
+
+
+# Criar variavel com valores do 0 ao 30
+
+lags <- seq(30)
+
+
+# Atribuir nome a cada futura coluna comecando com mr_ tendo depois o numero respetivo
+
+lag_names <- paste("mr", formatC(lags, width = nchar(max(lags))), 
+                   sep = "_")
+
+# Funcao para fazer com que cada coluna seja a coluna anterior descendo uma linha
+
+lag_functions <- setNames(paste("lag(., ", lags, ")"), lag_names)
+
+
+# Adicionar as colunas anteriores a tabela correlacao
+
+gr_mr_lag <- gr_mr_lag %>% 
+  mutate_at(vars(mobilidade_ponderada), funs_(lag_functions))
+
+
+# Relacao das variaveis
+
+relacao_grmr <- melt(gr_mr_lag[,-1], id.vars = "Growth_Rate")
+
+levels(relacao_grmr$variable) <- 0:30
+
+ggplot(relacao_grmr, aes(value, Growth_Rate, fill = variable)) +
+  geom_point() +
+  facet_wrap(relacao_grmr$variable) +
+  stat_poly_eq(aes(label = paste(..eq.label..)),
+               formula = y~x, parse = TRUE, label.y = 0.2) + 
+  theme(legend.title = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(size = 14),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12)) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa de Mobilidade (MR) para Diferentes Desfasamentos",
+       x = "MR",
+       y = "GR")
+
+```
+
+
+#### Correlação
+
+Isto é também verificado quando fazemos a correlação entre as duas variáveis para os diferentes desfasamentos. A correlação máxima ocorre no desfasamento de 17 dias. No entanto, esta correlação é de apenas 0.25 o que indica uma fraca relação entre as duas variáveis.
+
+```{r warning=FALSE, message=FALSE}
+# Ver correlacao
+
+correlacao <- gr_mr_lag[-1] %>% 
+  correlate() %>% 
+  focus(Growth_Rate)
+correlacao[1] = 0:30
+names(correlacao) = c("Lag", "correlacao")
+
+correlacao_grafico <- ggplot(correlacao, aes(x = Lag, y = correlacao)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', correlacao))) +
+  geom_line() +
+  geom_rect(xmin= 16, xmax= 18, ymin=-0.09, ymax=0.3, color="coral2", size=0.1, alpha = 0.4, 
+            aes(fill="Correlação \nsuperior a 0.24")) +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(size=9),
+        legend.text = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) em Diferentes Desfasamentos (Lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+
+correlacao_grafico_interativo <- ggplotly(correlacao_grafico, tooltip = "text")
+
+# Ver correlacao para lag 17
+grmr_grafico <- ggplot(gr_mr_lag, aes(x = mr_17, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_17,
+                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(method = "lm", color = "coral2", se = FALSE, formula = y~x, size = 0.7) +
+  stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE) +  
+  theme(plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  ylim(0, 1.5) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) para Lag de 17 dias",
+       x = "MR",
+       y = "GR") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+
+grmr_grafico_interativo <- ggplotly(grmr_grafico, tooltip = "text")
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      correlacao_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      grmr_grafico_interativo
+    )
+  ))
+)
+
+```
+
+
+### Distrital
+
+<br>
+
+## **Dúvidas**
+
+<ul>
+  <li>Qual o melhor gráfico para MR ao longo do tempo? Média rolante ou tendência?</li>
+  
+```{r warning=FALSE, message=FALSE}
+## Media rolante ultimos 7 dias
+
+### Adicionar a base de dados coluna com o mobility rate feito com a media rolante dos ultimos 7 dias
+mobilidade_pt <- mobilidade_pt %>% 
+  group_by(polygon_name) %>% 
+  mutate(mobilidade_media = rollapply(all_day_bing_tiles_visited_relative_change, 7, mean, na.pad = TRUE, align = "right"))
+
+### Fazer um grafico de linhas com data no eixo do x, mobility rate feito com media rolante no eixo do y e um distrito em cada linha
+mobilidade_media_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = mobilidade_media, color = polygon_name, group = 1, 
+                                                text = paste('Data: ', ds,
+                                                             '<br>Mobilidade Média:', mobilidade_media,
+                                                             '<br>Distrito:', polygon_name))) +
+  geom_line() +
+  labs(title = "Evolução da Mobility Rate por Distrito - Média Rolante",
+       x = "Mês",
+       y = "Mobility Rate") +
+  theme_classic() +
+  theme(legend.title = element_blank()) +
+  scale_x_date(breaks = "months", date_labels = "%b") +
+  geom_line(aes(y = 1, text = ""), color = "grey", linetype = "dotted")
+
+ggplotly(mobilidade_media_grafico, tooltip = "text")
+
+
+
+## Curva da tendencia
+
+### Grafico com data no eixo do x, mobility rate no eixo do y e distrito nas cores das linhas
+
+mobilidade_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = all_day_bing_tiles_visited_relative_change, color = polygon_name)) +
+  geom_point(size = 0.7,  aes(text = paste('Distrito:', polygon_name,
+                                           '<br>Data: ', ds,
+                                           '<br>Taxa de Mobilidade:', all_day_bing_tiles_visited_relative_change))) +
+  geom_smooth(se = FALSE, size = 0.7) +
+  labs(title = "Evolução da Taxa de Mobilidade (MR) por Distrito",
+       x = "Mês",
+       y = "MR") +
+  theme_classic() +
+  theme(legend.title = element_blank()) +
+  scale_x_date(breaks = "months", date_labels = "%b") +
+  geom_line(aes(y = 1, text = ""), size = 0.5, color = "black", linetype = "dotted")
+
+ggplotly(mobilidade_grafico, tooltip = "text")
+
+```
+
+<br>  
+  <li>Como o declive é quase 0 signfica que não têm relação?</li>
+  
+```{r warning=FALSE, message=FALSE, fig.height=10, fig.width=12}
+# Relacao das variaveis
+
+relacao_grmr <- melt(gr_mr_lag[,-1], id.vars = "Growth_Rate")
+
+levels(relacao_grmr$variable) <- 0:30
+
+ggplot(relacao_grmr, aes(value, Growth_Rate, fill = variable)) +
+  geom_point() +
+  facet_wrap(relacao_grmr$variable) +
+  stat_poly_eq(aes(label = paste(..eq.label..)),
+               formula = y~x, parse = TRUE, label.y = 0.2) + 
+  theme(legend.title = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(size = 18),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12)) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa de Mobilidade (MR) para Diferentes Desfasamentos",
+       x = "MR",
+       y = "GR")
+
+```
+
+<br>  
+  <li>Qual a melhor maneira de fazer a correlação? A primeira é com a correlação de pearson o que dá lag 10 e a segunda é com os coeficientes de glm o que dá lag 17. O que é melhor usar? E com estas correlações tão baixas podemos tirar conclusões do lag e da influencia da mobilidade nos casos?</li>
+  
+```{r warning=FALSE, message=FALSE}
+# Ver correlacao
+
+correlacao <- gr_mr_lag[-1] %>% 
+  correlate() %>% 
+  focus(Growth_Rate)
+correlacao[1] = 0:30
+names(correlacao) = c("Lag", "correlacao")
+
+correlacao_grafico <- ggplot(correlacao, aes(x = Lag, y = correlacao)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', correlacao))) +
+  geom_line() +
+  geom_rect(xmin= 16, xmax= 18, ymin=-0.09, ymax=0.3, color="coral2", size=0.1, alpha = 0.4, 
+            aes(fill="Correlação \nsuperior a 0.24")) +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(size=9),
+        legend.text = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) em Diferentes Desfasamentos (Lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+
+correlacao_grafico_interativo <- ggplotly(correlacao_grafico, tooltip = "text")
+
+# Ver relacao para lag 17
+grmr_grafico <- ggplot(gr_mr_lag, aes(x = mr_17, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_17,
+                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(method = "lm", color = "coral2", se = FALSE, formula = y~x, size = 0.7) +
+  stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE) +  
+  theme(plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  ylim(0, 1.5) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) para Lag de 17 dias",
+       x = "MR",
+       y = "GR") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+
+grmr_grafico_interativo <- ggplotly(grmr_grafico, tooltip = "text")
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      correlacao_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      grmr_grafico_interativo
+    )
+  ))
+)
+
+```
+
+```{r warning=FALSE, message=FALSE}
+#### Com gaussian
+
+glm <- as.data.frame(coefficients(glm(Growth_Rate ~ mobilidade_ponderada, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr1 = coefficients(glm(Growth_Rate ~ `mr_ 1`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr2 = coefficients(glm(Growth_Rate ~ `mr_ 2`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr3 = coefficients(glm(Growth_Rate ~ `mr_ 3`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr4 = coefficients(glm(Growth_Rate ~ `mr_ 4`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr5 = coefficients(glm(Growth_Rate ~ `mr_ 5`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr6 = coefficients(glm(Growth_Rate ~ `mr_ 6`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr7 = coefficients(glm(Growth_Rate ~ `mr_ 7`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr8 = coefficients(glm(Growth_Rate ~ `mr_ 8`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr9 = coefficients(glm(Growth_Rate ~ `mr_ 9`, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr10 = coefficients(glm(Growth_Rate ~ mr_10, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr11 = coefficients(glm(Growth_Rate ~ mr_11, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr12 = coefficients(glm(Growth_Rate ~ mr_12, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr13 = coefficients(glm(Growth_Rate ~ mr_13, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr14 = coefficients(glm(Growth_Rate ~ mr_14, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr15 = coefficients(glm(Growth_Rate ~ mr_15, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr16 = coefficients(glm(Growth_Rate ~ mr_16, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr17 = coefficients(glm(Growth_Rate ~ mr_17, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr18 = coefficients(glm(Growth_Rate ~ mr_18, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr19 = coefficients(glm(Growth_Rate ~ mr_19, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr20 = coefficients(glm(Growth_Rate ~ mr_20, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr21 = coefficients(glm(Growth_Rate ~ mr_21, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr22 = coefficients(glm(Growth_Rate ~ mr_22, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr23 = coefficients(glm(Growth_Rate ~ mr_23, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr24 = coefficients(glm(Growth_Rate ~ mr_24, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr25 = coefficients(glm(Growth_Rate ~ mr_25, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr26 = coefficients(glm(Growth_Rate ~ mr_26, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr27 = coefficients(glm(Growth_Rate ~ mr_27, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr28 = coefficients(glm(Growth_Rate ~ mr_28, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr29 = coefficients(glm(Growth_Rate ~ mr_29, family = "gaussian", data = gr_mr_lag))) %>% 
+  mutate(mr30 = coefficients(glm(Growth_Rate ~ mr_30, family = "gaussian", data = gr_mr_lag))) %>% 
+  rbind(0:30)
+
+names(glm)[1] = "mr0"
+glm_inv <- as.data.frame(t(glm[c(2, 3),])) %>% 
+  rownames_to_column(var = "mr")
+names(glm_inv) = c("mr", "coeficiente", "lag")
+
+
+
+lag_grafico <- ggplot(glm_inv, aes(x = lag, y = coeficiente)) +
+  geom_point() +
+  geom_line() +
+  geom_rect(xmin= 9, xmax= 11, ymin=-0.09, ymax=0.15, fill="coral2", size=0.1, alpha = 0.4) +
+  #annotate("rect", xmin= 9, xmax= 11, ymin=-Inf, ymax=Inf, fill = "coral2", alpha = 0.4) +
+  labs(title = "Correlação entre Mobility Rate e Growth Rate em Diferentes Desfasamentos (lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  theme(plot.title = element_text(size=9)) +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+  
+lag_grafico_interativo <- ggplotly(lag_grafico)
+
+# Ver relacao para lag 10
+grmr_grafico_2 <- ggplot(gr_mr_lag, aes(x = mr_10, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_10,
+                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(method = "lm", color = "coral2", se = FALSE, formula = y~x, size = 0.7) +
+  stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE) +  
+  theme(plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  ylim(0, 1.5) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) para Lag de 10 dias",
+       x = "MR",
+       y = "GR") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+
+grmr_grafico_interativo_2 <- ggplotly(grmr_grafico_2, tooltip = "text")
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      lag_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      grmr_grafico_interativo_2
+    )
+  ))
+)
+
+```
+
