@@ -15,6 +15,7 @@ library(ggpmisc)
 library(corrr)
 
 
+
 # IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
 mobilidade_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
 
@@ -33,7 +34,12 @@ covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-da
 
 
 # IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
+<<<<<<< HEAD
 concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AQ6V32LY5G7VBAOHKSUAWVC7Q4XHS") %>% 
+=======
+concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTATDUOR5CNOFKP7S2KK7RV3LY") %>% 
+  select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
+>>>>>>> 7679987937f0922380f67092788d684499b0776a
 
 
 # IMPORTAR MAPA DOS DISTRITOS DE PORTUGAL DISPONIVEIS  EM: <https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json>
@@ -128,7 +134,7 @@ mobilidade_nacional$data <- as.Date(mobilidade_nacional$data,format = "%d-%m-%Y"
 mobilidade_nacional_grafico <- ggplot(mobilidade_nacional, aes(x = data, y = mobilidade_ponderada)) +
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
                                           '<br>Taxa de Mobilidade:', mobilidade_ponderada))) +
-  geom_smooth(se = FALSE, size = 0.7, color = "coral2") +
+  geom_smooth(se = FALSE, size = 0.7, color = "#64CEAA") +
   labs(title = "Evolução da Taxa de Mobilidade (MR) Nacional",
        x = "Mês",
        y = "MR") +
@@ -254,6 +260,7 @@ leaflet(mapa_distritos) %>%
 
 
 
+
 ### Grafico da evolucao
 
 #### Data no eixo do x, mobility rate no eixo do y e distrito nas cores das linhas
@@ -274,35 +281,13 @@ mobilidade_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = all_day_bing_tiles_v
 ggplotly(mobilidade_grafico, tooltip = "text")
 
 
-# ## Media rolante ultimos 7 dias
-# 
-# ### Adicionar a base de dados coluna com o mobility rate feito com a media rolante dos ultimos 7 dias
-# mobilidade_pt <- mobilidade_pt %>% 
-#   group_by(polygon_name) %>% 
-#   mutate(mobilidade_media = rollapply(all_day_bing_tiles_visited_relative_change, 7, mean, na.pad = TRUE, align = "right"))
-# 
-# ### Fazer um grafico de linhas com data no eixo do x, mobility rate feito com media rolante no eixo do y e um distrito em cada linha
-# mobilidade_media_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = mobilidade_media, color = polygon_name, group = 1, 
-#                                                 text = paste('Data: ', ds,
-#                                                              '<br>Mobilidade Média:', mobilidade_media,
-#                                                              '<br>Distrito:', polygon_name))) +
-#   geom_line() +
-#   labs(title = "Evolução da Mobility Rate por Distrito - Média Rolante",
-#        x = "Mês",
-#        y = "Mobility Rate") +
-#   theme_classic() +
-#   theme(legend.title = element_blank()) +
-#   scale_x_date(breaks = "months", date_labels = "%b") +
-#   geom_line(aes(y = 1, text = ""), color = "grey", linetype = "dotted")
-# 
-# ggplotly(mobilidade_media_grafico, tooltip = "text")
-
-
 
 
 # Taxa de Crescimento de Novos Casos (GR)
 
 ## Nacional 
+
+### Marco - Hoje
 
 ### O gr calcula-se dividindo o logaritmo da media de novos casos dos ultimos 3 dias pelo logaritmo da media de novos casos dos ultimos 7 dias.
 ### Para isso, fizemos uma tabela com uma coluna para a data e outra coluna para a divisao.
@@ -348,8 +333,93 @@ rollmean_3_nacional_grafico <- ggplot(rollmean_3_nacional, aes(x = data, y = con
 ggplotly(rollmean_3_nacional_grafico, tooltip = "text")
 
 
+<<<<<<< HEAD
 # ## gr por distrito
 # 
+=======
+### Marco - Maio
+
+#### Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
+
+gr_marco_maio <- gr %>% 
+  filter(data >= "2020-03-03" & data <= "2020-05-11")
+
+gr_marco_maio_evolucao_grafico <- ggplot(gr_marco_maio, aes(x = data, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  ylim(0.7, 1.5) +
+  labs(title = "Evolução da Taxa de Crescimento de Novos Casos (GR)",
+       x = "Mês",
+       y = "GR") +
+  theme(plot.title = element_text(size=11)) +
+  scale_x_date(breaks = "week", date_labels = "%d/%m")
+
+
+ggplotly(gr_marco_maio_evolucao_grafico, tooltip = "text")
+
+
+#### Grafico da evolucao da media de casos dos ultimos 3 dias
+
+rollmean_marco_maio <- rollmean_3_nacional %>% 
+  filter(data >= "2020-03-03" & data <= "2020-05-11")
+
+rollmean_marco_maio_grafico <- ggplot(rollmean_marco_maio, aes(x = data, y = confirmados_novos)) + 
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                                          '<br>Novos casos (Média):', confirmados_novos))) +
+  geom_smooth(color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  labs(title = "Evolução dos Novos Casos (Média dos Últimos 3 dias)",
+       x = "Mês",
+       y = "Novos Casos (Média dos Últimos 3 dias)") +
+  theme(plot.title = element_text(size=11)) +
+  scale_x_date(breaks = "weeks", date_labels = "%d/%m")
+
+ggplotly(rollmean_marco_maio_grafico, tooltip = "text")
+
+
+### Maio- Hoje
+
+#### Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
+gr_maio_hoje <- gr %>% 
+  filter(data > "2020-05-11")
+
+gr_maio_hoje_evolucao_grafico <- ggplot(gr_maio_hoje, aes(x = data, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  ylim(0.7, 1.5) +
+  labs(title = "Evolução da Taxa de Crescimento de Novos Casos (GR)",
+       x = "Mês",
+       y = "GR") +
+  theme(plot.title = element_text(size=11)) +
+  scale_x_date(breaks = "months", date_labels = "%b")
+
+
+ggplotly(gr_maio_hoje_evolucao_grafico, tooltip = "text")
+
+
+#### Grafico da evolucao da media de casos dos ultimos 3 dias
+
+rollmean_maio_hoje<- rollmean_3_nacional %>% 
+  filter(data > "2020-05-11")
+
+rollmean_maio_hoje_grafico <- ggplot(rollmean_maio_hoje, aes(x = data, y = confirmados_novos)) + 
+  geom_point(size = 0.7, aes(text = paste('Data: ', data,
+                                          '<br>Novos casos (Média):', confirmados_novos))) +
+  geom_smooth(color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  labs(title = "Evolução dos Novos Casos (Média dos Últimos 3 dias)",
+       x = "Mês",
+       y = "Novos Casos (Média dos Últimos 3 dias)") +
+  theme(plot.title = element_text(size=11)) +
+  scale_x_date(breaks = "months", date_labels = "%b")
+
+ggplotly(rollmean_maio_hoje_grafico, tooltip = "text")
+
+
+
+## Distrital
+
+>>>>>>> 7679987937f0922380f67092788d684499b0776a
 # ### Tabela com coluna para data, coluna para concelho e outra para mobility rate
 # covid_concelhos_melt <- melt(covid_concelhos, id.vars = "data")
 # 
@@ -369,9 +439,9 @@ ggplotly(rollmean_3_nacional_grafico, tooltip = "text")
 # names(covid_concelhos_melt)[4] = "concelho"
 # 
 # covid_concelho_distrito <- left_join(covid_concelhos_melt, concelho_distrito, by = "concelho")
-# 
+
 # ### Corrigir nomes de distritos em falta
-# covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ANGRA DO HEROÃSMO" | 
+# covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "ANGRA DO HEROÃSMO" |
 #                                    covid_concelho_distrito$concelho_melt == "CALHETA (AÃ‡ORES)" |
 #                                    covid_concelho_distrito$concelho_melt == "CORVO" |
 #                                    covid_concelho_distrito$concelho_melt == "HORTA" |
@@ -558,10 +628,57 @@ ggplot(relacao_grmr, aes(value, Growth_Rate, fill = variable)) +
        x = "MR",
        y = "GR")
 
+#### Grafico Marco - Maio
+gr_mr_lag_marco_maio <- gr_mr_lag %>% 
+  filter(data >= "2020-03-03" & data <= "2020-05-11")
+
+relacao_marco_maio <- melt(gr_mr_lag_marco_maio[,-1], id.vars = "Growth_Rate")
+
+levels(relacao_marco_maio$variable) <- 0:30
+
+ggplot(relacao_marco_maio, aes(value, Growth_Rate, fill = variable)) +
+  geom_point() +
+  facet_wrap(relacao_marco_maio$variable) +
+  stat_poly_eq(aes(label = paste(..eq.label..)),
+               formula = y~x, parse = TRUE, label.y = 1) + 
+  geom_smooth(method = "lm", se = FALSE, color = "#64CEAA") +
+  theme(legend.title = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(size = 14),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12)) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa de Mobilidade (MR) para Diferentes Desfasamentos",
+       x = "MR",
+       y = "GR")
+
+#### Grafico Maio - Hoje
+gr_mr_lag_maio_hoje <- gr_mr_lag %>% 
+  filter(data > "2020-05-11")
+
+relacao_maio_hoje <- melt(gr_mr_lag_maio_hoje[,-1], id.vars = "Growth_Rate")
+
+levels(relacao_maio_hoje$variable) <- 0:30
+
+ggplot(relacao_maio_hoje, aes(value, Growth_Rate, fill = variable)) +
+  geom_point() +
+  facet_wrap(relacao_maio_hoje$variable) +
+  stat_poly_eq(aes(label = paste(..eq.label..)),
+               formula = y~x, parse = TRUE, label.y = 1) + 
+  geom_smooth(method = "lm", se = FALSE, color = "#64CEAA") +
+  theme(legend.title = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(size = 14),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12)) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa de Mobilidade (MR) para Diferentes Desfasamentos",
+       x = "MR",
+       y = "GR")
 
 
 
 ### Correlacao
+
+#### Março - Hoje
 
 correlacao <- gr_mr_lag[-1] %>% 
   correlate() %>% 
@@ -573,7 +690,7 @@ correlacao_grafico <- ggplot(correlacao, aes(x = Lag, y = correlacao)) +
   geom_point(aes(text = paste('Lag: ', Lag,
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
-  geom_rect(xmin= 16, xmax= 18, ymin=-0.09, ymax=0.3, color="coral2", size=0.1, alpha = 0.4, 
+  geom_rect(xmin= 16, xmax= 18, ymin=-0.09, ymax=0.3, fill="#64CEAA", size=0.1, alpha = 0.4, 
             aes(fill="Correlação \nsuperior a 0.24")) +
   theme(legend.title = element_blank(),
         plot.title = element_text(size=12),
@@ -588,7 +705,7 @@ correlacao_grafico <- ggplot(correlacao, aes(x = Lag, y = correlacao)) +
 ggplotly(correlacao_grafico, tooltip = "text")
 
 
-#### Ver relacao para lag 17
+##### Ver relacao para lag 17
 grmr_grafico <- ggplot(gr_mr_lag, aes(x = mr_17, y = Growth_Rate)) +
   geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_17,
                                           '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
@@ -606,6 +723,96 @@ grmr_grafico <- ggplot(gr_mr_lag, aes(x = mr_17, y = Growth_Rate)) +
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
 ggplotly(grmr_grafico, tooltip = "text")
+
+
+#### Março - Maio
+correlacao_marco_maio <- gr_mr_lag_marco_maio[-1] %>% 
+  correlate() %>% 
+  focus(Growth_Rate)
+correlacao_marco_maio[1] = 0:30
+names(correlacao_marco_maio) = c("Lag", "correlacao")
+
+correlacao_marco_maio_grafico <- ggplot(correlacao_marco_maio, aes(x = Lag, y = correlacao)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', correlacao))) +
+  geom_line() +
+  geom_rect(xmin= 9, xmax= 10, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+            aes(text="Correlação \nsuperior a 0.75")) +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(size=9),
+        legend.text = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) entre Março e Maio em Diferentes Desfasamentos (Lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+
+ggplotly(correlacao_marco_maio_grafico, tooltip = "text")
+
+##### Ver relacao para lag 9
+grmr_marco_maio_grafico <- ggplot(gr_mr_lag_marco_maio, aes(x = `mr_ 9`, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', `mr_ 9`,
+                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(method = "lm", color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE) +  
+  theme(plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  ylim(0, 1.5) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) entre Março e Maio para Lag de 9 dias",
+       x = "MR",
+       y = "GR") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+
+ggplotly(grmr_marco_maio_grafico, tooltip = "text")
+
+#### Maio - Hoje
+
+correlacao_maio_hoje <- gr_mr_lag_maio_hoje[-1] %>% 
+  correlate() %>% 
+  focus(Growth_Rate)
+correlacao_maio_hoje[1] = 0:30
+names(correlacao_maio_hoje) = c("Lag", "correlacao")
+
+correlacao_maio_hoje_grafico <- ggplot(correlacao_maio_hoje, aes(x = Lag, y = correlacao)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', correlacao))) +
+  geom_line() +
+  geom_rect(xmin= 10.8, xmax= 11.2, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+            aes(text="Correlação \nsuperior a 0.19")) +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(size=9),
+        legend.text = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) de Maio a Hoje em Diferentes Desfasamentos (Lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+
+ggplotly(correlacao_maio_hoje_grafico, tooltip = "text")
+
+##### Ver relacao para lag 11
+grmr_maio_hoje_grafico <- ggplot(gr_mr_lag_maio_hoje, aes(x = mr_11, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_11,
+                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(method = "lm", color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE) +  
+  theme(plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  ylim(0, 1.5) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) entre Maio e Hoje para Lag de 11 dias",
+       x = "MR",
+       y = "GR") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+
+ggplotly(grmr_maio_hoje_grafico, tooltip = "text")
 
 
 
