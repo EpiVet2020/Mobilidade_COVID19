@@ -34,12 +34,8 @@ covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-da
 
 
 # IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
-<<<<<<< HEAD
-concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AQ6V32LY5G7VBAOHKSUAWVC7Q4XHS") %>% 
-=======
 concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTATDUOR5CNOFKP7S2KK7RV3LY") %>% 
   select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
->>>>>>> 7679987937f0922380f67092788d684499b0776a
 
 
 # IMPORTAR MAPA DOS DISTRITOS DE PORTUGAL DISPONIVEIS  EM: <https://github.com/ufoe/d3js-geojson/blob/master/Portugal.json>
@@ -50,7 +46,7 @@ mapa_distritos <- geojson_read("https://raw.githubusercontent.com/ufoe/d3js-geoj
 # TAXA DE MOBILIDADE
 
 ### Selecionar Portugal na base de dados
-mobilidade_pt <- mobilidade_c %>% 
+mobilidade_pt <- mobilidade_r %>% 
   filter(country=="PRT")
 
 ### Corrigir os nomes dos distritos
@@ -333,10 +329,6 @@ rollmean_3_nacional_grafico <- ggplot(rollmean_3_nacional, aes(x = data, y = con
 ggplotly(rollmean_3_nacional_grafico, tooltip = "text")
 
 
-<<<<<<< HEAD
-# ## gr por distrito
-# 
-=======
 ### Marco - Maio
 
 #### Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
@@ -377,7 +369,7 @@ rollmean_marco_maio_grafico <- ggplot(rollmean_marco_maio, aes(x = data, y = con
 ggplotly(rollmean_marco_maio_grafico, tooltip = "text")
 
 
-### Maio- Hoje
+### Maio - Hoje
 
 #### Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
 gr_maio_hoje <- gr %>% 
@@ -419,7 +411,6 @@ ggplotly(rollmean_maio_hoje_grafico, tooltip = "text")
 
 ## Distrital
 
->>>>>>> 7679987937f0922380f67092788d684499b0776a
 # ### Tabela com coluna para data, coluna para concelho e outra para mobility rate
 # covid_concelhos_melt <- melt(covid_concelhos, id.vars = "data")
 # 
@@ -507,7 +498,7 @@ ggplotly(rollmean_maio_hoje_grafico, tooltip = "text")
 # 
 # covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "LAGOA (FARO)" |
 #                                    covid_concelho_distrito$concelho_melt == "LOULÃ‰" |
-#                                    covid_concelho_distrito$concelho_melt == "SÃƒO BRÃ.S DE ALPORTEL" |
+#                                    covid_concelho_distrito$concelho_melt == "SÃƒO BRÃS DE ALPORTEL" |
 #                                    covid_concelho_distrito$concelho_melt == "VILA REAL DE SANTO ANTÃ“NIO"] = "Faro"
 # 
 # covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "MELGAÃ‡O" |
@@ -527,7 +518,7 @@ ggplotly(rollmean_maio_hoje_grafico, tooltip = "text")
 # 
 # covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SOBRAL DE MONTE AGRAÃ‡O"] = "Lisboa"
 # 
-# covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SÃ.TÃƒO" |
+# covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "SÃTÃƒO" |
 #                                    covid_concelho_distrito$concelho_melt == "SÃƒO JOÃƒO DA PESQUEIRA" |
 #                                    covid_concelho_distrito$concelho_melt == "TABUAÃ‡O"] = "Viseu"
 # 
@@ -535,6 +526,16 @@ ggplotly(rollmean_maio_hoje_grafico, tooltip = "text")
 # 
 # covid_concelho_distrito$distrito[covid_concelho_distrito$concelho_melt == "VILA VIÃ‡OSA"] = "Evora"
 # 
+# 
+# ### Corrigir nome dos distritos que não estão bem escritos
+# 
+# covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "SantarÃ©m"] <- "Santarem"
+# 
+# covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "Ã‰vora"] <- "Evora"
+# 
+# covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "SetÃºbal"] <- "Setubal"
+# 
+# covid_concelho_distrito$distrito[covid_concelho_distrito$distrito == "BraganÃ§a"] <- "Braganca"
 # 
 # ### Calcular o numero de casos por distrito somando o número de casos dos concelhos desse distrito por dia
 # 
@@ -568,10 +569,6 @@ ggplotly(rollmean_maio_hoje_grafico, tooltip = "text")
 # gr_distritos <- as.data.frame(cbind(incidencia_distrito_lag[7:104,1], 
 #                                     as.data.frame(log(rollapply(incidencia_distrito_lag[5:nrow(incidencia_distrito_lag), 2:21], 3, mean))
 #                                                   /log(rollapply(incidencia_distrito_lag[, 2:21], 7, mean)))))
-# 
-# 
-
-
 
 
 
@@ -647,13 +644,16 @@ ggplot(relacao_marco_maio, aes(value, Growth_Rate, fill = variable)) +
         plot.title = element_text(size = 14),
         axis.title.x = element_text(size = 12),
         axis.title.y = element_text(size = 12)) +
+  ylim(0.5, 2) + #alguns valores dos primeiros graficos foram removidos
   labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa de Mobilidade (MR) para Diferentes Desfasamentos",
        x = "MR",
        y = "GR")
 
 #### Grafico Maio - Hoje
-gr_mr_lag_maio_hoje <- gr_mr_lag %>% 
-  filter(data > "2020-05-11")
+
+gr_mr_lag_maio_hoje <- left_join(gr, mobilidade_nacional, by = "data") %>% 
+  filter(data > "2020-05-11") %>% 
+  mutate_at(vars(mobilidade_ponderada), funs_(lag_functions))
 
 relacao_maio_hoje <- melt(gr_mr_lag_maio_hoje[,-1], id.vars = "Growth_Rate")
 
@@ -663,14 +663,14 @@ ggplot(relacao_maio_hoje, aes(value, Growth_Rate, fill = variable)) +
   geom_point() +
   facet_wrap(relacao_maio_hoje$variable) +
   stat_poly_eq(aes(label = paste(..eq.label..)),
-               formula = y~x, parse = TRUE, label.y = 1) + 
+               formula = y~x, parse = TRUE, label.y = 0) + 
   geom_smooth(method = "lm", se = FALSE, color = "#64CEAA") +
   theme(legend.title = element_blank(),
         legend.position = "none",
         plot.title = element_text(size = 14),
         axis.title.x = element_text(size = 12),
         axis.title.y = element_text(size = 12)) +
-  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa de Mobilidade (MR) para Diferentes Desfasamentos",
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa de Mobilidade (MR) \nentre Maio e Hoje para Diferentes Desfasamentos",
        x = "MR",
        y = "GR")
 
@@ -693,10 +693,10 @@ correlacao_grafico <- ggplot(correlacao, aes(x = Lag, y = correlacao)) +
   geom_rect(xmin= 16, xmax= 18, ymin=-0.09, ymax=0.3, fill="#64CEAA", size=0.1, alpha = 0.4, 
             aes(fill="Correlação \nsuperior a 0.24")) +
   theme(legend.title = element_blank(),
-        plot.title = element_text(size=12),
-        legend.text = element_text(size=8),
-        axis.title.x = element_text(size = 10),
-        axis.title.y = element_text(size = 10)) +
+        plot.title = element_text(size=9),
+        legend.text = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
   labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) em Diferentes Desfasamentos (Lag)",
        x = "Lag (dias)",
        y = "Correlação entre MR e GR") +
@@ -713,16 +713,17 @@ grmr_grafico <- ggplot(gr_mr_lag, aes(x = mr_17, y = Growth_Rate)) +
   stat_poly_eq(formula = y~x, 
                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
                parse = TRUE) +  
-  theme(plot.title = element_text(size=12),
-        axis.title.x = element_text(size = 10),
-        axis.title.y = element_text(size = 10)) +
+  theme(plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
   ylim(0, 1.5) +
   labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) para Lag de 17 dias",
        x = "MR",
        y = "GR") +
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
-ggplotly(grmr_grafico, tooltip = "text")
+ggplotly(grmr_grafico, tooltip = "text") %>% 
+  layout(annotations = list(x = 0.7, y = 0.4, text = "y = 0.963 + 0.0473 x", showarrow = FALSE))
 
 
 #### Março - Maio
@@ -767,7 +768,8 @@ grmr_marco_maio_grafico <- ggplot(gr_mr_lag_marco_maio, aes(x = `mr_ 9`, y = Gro
        y = "GR") +
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
-ggplotly(grmr_marco_maio_grafico, tooltip = "text")
+ggplotly(grmr_marco_maio_grafico, tooltip = "text") %>% 
+  layout(annotations = list(x = 0.7, y = 0.4, text = "y = 0.866 + 0.258 x", showarrow = FALSE))
 
 #### Maio - Hoje
 
@@ -781,8 +783,8 @@ correlacao_maio_hoje_grafico <- ggplot(correlacao_maio_hoje, aes(x = Lag, y = co
   geom_point(aes(text = paste('Lag: ', Lag,
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
-  geom_rect(xmin= 10.8, xmax= 11.2, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
-            aes(text="Correlação \nsuperior a 0.19")) +
+  geom_rect(xmin= 26, xmax= 27, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+            aes(text="Correlação \nsuperior a 0.20")) +
   theme(legend.title = element_blank(),
         plot.title = element_text(size=9),
         legend.text = element_text(size=6),
@@ -795,9 +797,9 @@ correlacao_maio_hoje_grafico <- ggplot(correlacao_maio_hoje, aes(x = Lag, y = co
 
 ggplotly(correlacao_maio_hoje_grafico, tooltip = "text")
 
-##### Ver relacao para lag 11
-grmr_maio_hoje_grafico <- ggplot(gr_mr_lag_maio_hoje, aes(x = mr_11, y = Growth_Rate)) +
-  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_11,
+##### Ver relacao para lag 26
+grmr_maio_hoje_grafico <- ggplot(gr_mr_lag_maio_hoje, aes(x = mr_26, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_26,
                                           '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
   geom_smooth(method = "lm", color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
   stat_poly_eq(formula = y~x, 
@@ -806,13 +808,14 @@ grmr_maio_hoje_grafico <- ggplot(gr_mr_lag_maio_hoje, aes(x = mr_11, y = Growth_
   theme(plot.title = element_text(size=9),
         axis.title.x = element_text(size = 8),
         axis.title.y = element_text(size = 8)) +
-  ylim(0, 1.5) +
-  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) entre Maio e Hoje para Lag de 11 dias",
+  ylim(0.7, 1.3) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) entre Maio e Hoje para Lag de 26 dias",
        x = "MR",
        y = "GR") +
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
-ggplotly(grmr_maio_hoje_grafico, tooltip = "text")
+ggplotly(grmr_maio_hoje_grafico, tooltip = "text") %>% 
+  layout(annotations = list(x = 0.85, y = 0.77, text = "y = 0.93 + 0.078 x", showarrow = FALSE))
 
 
 
@@ -820,61 +823,118 @@ ggplotly(grmr_maio_hoje_grafico, tooltip = "text")
 # 
 # #### Com gaussian
 # 
-# glm <- as.data.frame(coefficients(glm(Growth_Rate ~ mobilidade_ponderada, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr1 = coefficients(glm(Growth_Rate ~ `mr_ 1`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr2 = coefficients(glm(Growth_Rate ~ `mr_ 2`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr3 = coefficients(glm(Growth_Rate ~ `mr_ 3`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr4 = coefficients(glm(Growth_Rate ~ `mr_ 4`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr5 = coefficients(glm(Growth_Rate ~ `mr_ 5`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr6 = coefficients(glm(Growth_Rate ~ `mr_ 6`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr7 = coefficients(glm(Growth_Rate ~ `mr_ 7`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr8 = coefficients(glm(Growth_Rate ~ `mr_ 8`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr9 = coefficients(glm(Growth_Rate ~ `mr_ 9`, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr10 = coefficients(glm(Growth_Rate ~ mr_10, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr11 = coefficients(glm(Growth_Rate ~ mr_11, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr12 = coefficients(glm(Growth_Rate ~ mr_12, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr13 = coefficients(glm(Growth_Rate ~ mr_13, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr14 = coefficients(glm(Growth_Rate ~ mr_14, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr15 = coefficients(glm(Growth_Rate ~ mr_15, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr16 = coefficients(glm(Growth_Rate ~ mr_16, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr17 = coefficients(glm(Growth_Rate ~ mr_17, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr18 = coefficients(glm(Growth_Rate ~ mr_18, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr19 = coefficients(glm(Growth_Rate ~ mr_19, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr20 = coefficients(glm(Growth_Rate ~ mr_20, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr21 = coefficients(glm(Growth_Rate ~ mr_21, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr22 = coefficients(glm(Growth_Rate ~ mr_22, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr23 = coefficients(glm(Growth_Rate ~ mr_23, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr24 = coefficients(glm(Growth_Rate ~ mr_24, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr25 = coefficients(glm(Growth_Rate ~ mr_25, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr26 = coefficients(glm(Growth_Rate ~ mr_26, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr27 = coefficients(glm(Growth_Rate ~ mr_27, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr28 = coefficients(glm(Growth_Rate ~ mr_28, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr29 = coefficients(glm(Growth_Rate ~ mr_29, family = "gaussian", data = gr_mr_lag))) %>%
-#   mutate(mr30 = coefficients(glm(Growth_Rate ~ mr_30, family = "gaussian", data = gr_mr_lag))) %>%
+# glm <- as.data.frame(coefficients(glm(Growth_Rate ~ mobilidade_ponderada, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr1 = coefficients(glm(Growth_Rate ~ `mr_ 1`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr2 = coefficients(glm(Growth_Rate ~ `mr_ 2`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr3 = coefficients(glm(Growth_Rate ~ `mr_ 3`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr4 = coefficients(glm(Growth_Rate ~ `mr_ 4`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr5 = coefficients(glm(Growth_Rate ~ `mr_ 5`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr6 = coefficients(glm(Growth_Rate ~ `mr_ 6`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr7 = coefficients(glm(Growth_Rate ~ `mr_ 7`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr8 = coefficients(glm(Growth_Rate ~ `mr_ 8`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr9 = coefficients(glm(Growth_Rate ~ `mr_ 9`, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr10 = coefficients(glm(Growth_Rate ~ mr_10, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr11 = coefficients(glm(Growth_Rate ~ mr_11, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr12 = coefficients(glm(Growth_Rate ~ mr_12, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr13 = coefficients(glm(Growth_Rate ~ mr_13, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr14 = coefficients(glm(Growth_Rate ~ mr_14, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr15 = coefficients(glm(Growth_Rate ~ mr_15, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr16 = coefficients(glm(Growth_Rate ~ mr_16, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr17 = coefficients(glm(Growth_Rate ~ mr_17, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr18 = coefficients(glm(Growth_Rate ~ mr_18, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr19 = coefficients(glm(Growth_Rate ~ mr_19, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr20 = coefficients(glm(Growth_Rate ~ mr_20, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr21 = coefficients(glm(Growth_Rate ~ mr_21, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr22 = coefficients(glm(Growth_Rate ~ mr_22, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr23 = coefficients(glm(Growth_Rate ~ mr_23, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr24 = coefficients(glm(Growth_Rate ~ mr_24, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr25 = coefficients(glm(Growth_Rate ~ mr_25, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr26 = coefficients(glm(Growth_Rate ~ mr_26, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr27 = coefficients(glm(Growth_Rate ~ mr_27, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr28 = coefficients(glm(Growth_Rate ~ mr_28, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr29 = coefficients(glm(Growth_Rate ~ mr_29, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
+#   mutate(mr30 = coefficients(glm(Growth_Rate ~ mr_30, family = "gaussian", data = gr_mr_lag_marco_maio))) %>%
 #   rbind(0:30)
-#
+# 
 # names(glm)[1] = "mr0"
 # glm_inv <- as.data.frame(t(glm[c(2, 3),])) %>%
 #   rownames_to_column(var = "mr")
 # names(glm_inv) = c("mr", "coeficiente", "lag")
-#
-#
-#
+# 
+# 
 # lag_grafico <- ggplot(glm_inv, aes(x = lag, y = coeficiente)) +
 #   geom_point() +
 #   geom_line() +
-#   geom_rect(xmin= 9, xmax= 11, ymin=-0.09, ymax=0.15, fill="coral2", size=0.1, alpha = 0.4) +
-#   #annotate("rect", xmin= 9, xmax= 11, ymin=-Inf, ymax=Inf, fill = "coral2", alpha = 0.4) +
-#   labs(title = "Correlação entre Mobility Rate e Growth Rate em Diferentes Desfasamentos (lag)",
+#   #geom_rect(xmin= 26, xmax= 27, ymin=-0.04, ymax=0.15, fill="coral2", size=0.1, alpha = 0.4,
+#             #aes(text="Correlação \nsuperior a 0.06")) +
+#   labs(title = "Correlação entre Mobility Rate e Growth Rate entre Março e Maio em Diferentes Desfasamentos (lag)",
 #        x = "Lag (dias)",
 #        y = "Correlação entre MR e GR") +
 #   scale_x_continuous(breaks = seq(0, 30, 2))
-#
+# 
 # ggplotly(lag_grafico)
-#
-# # Ver relacao para lag 10
-# grmr_grafico_2 <- ggplot(gr_mr_lag, aes(x = mr_10, y = Growth_Rate)) +
-#   geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_10,
+
+
+
+# ## Calcular a Generalized Linear Regression (glm) entre growth rate nacional e mobility rate nacional para cada lag
+# 
+# #### Com gaussian
+# 
+# glm <- as.data.frame(coefficients(glm(Growth_Rate ~ mobilidade_ponderada, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr1 = coefficients(glm(Growth_Rate ~ `mr_ 1`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr2 = coefficients(glm(Growth_Rate ~ `mr_ 2`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr3 = coefficients(glm(Growth_Rate ~ `mr_ 3`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr4 = coefficients(glm(Growth_Rate ~ `mr_ 4`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr5 = coefficients(glm(Growth_Rate ~ `mr_ 5`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr6 = coefficients(glm(Growth_Rate ~ `mr_ 6`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr7 = coefficients(glm(Growth_Rate ~ `mr_ 7`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr8 = coefficients(glm(Growth_Rate ~ `mr_ 8`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr9 = coefficients(glm(Growth_Rate ~ `mr_ 9`, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr10 = coefficients(glm(Growth_Rate ~ mr_10, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr11 = coefficients(glm(Growth_Rate ~ mr_11, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr12 = coefficients(glm(Growth_Rate ~ mr_12, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr13 = coefficients(glm(Growth_Rate ~ mr_13, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr14 = coefficients(glm(Growth_Rate ~ mr_14, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr15 = coefficients(glm(Growth_Rate ~ mr_15, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr16 = coefficients(glm(Growth_Rate ~ mr_16, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr17 = coefficients(glm(Growth_Rate ~ mr_17, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr18 = coefficients(glm(Growth_Rate ~ mr_18, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr19 = coefficients(glm(Growth_Rate ~ mr_19, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr20 = coefficients(glm(Growth_Rate ~ mr_20, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr21 = coefficients(glm(Growth_Rate ~ mr_21, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr22 = coefficients(glm(Growth_Rate ~ mr_22, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr23 = coefficients(glm(Growth_Rate ~ mr_23, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr24 = coefficients(glm(Growth_Rate ~ mr_24, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr25 = coefficients(glm(Growth_Rate ~ mr_25, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr26 = coefficients(glm(Growth_Rate ~ mr_26, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr27 = coefficients(glm(Growth_Rate ~ mr_27, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr28 = coefficients(glm(Growth_Rate ~ mr_28, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr29 = coefficients(glm(Growth_Rate ~ mr_29, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   mutate(mr30 = coefficients(glm(Growth_Rate ~ mr_30, family = "gaussian", data = gr_mr_lag_maio_hoje))) %>%
+#   rbind(0:30)
+# 
+# names(glm)[1] = "mr0"
+# glm_inv <- as.data.frame(t(glm[c(2, 3),])) %>%
+#   rownames_to_column(var = "mr")
+# names(glm_inv) = c("mr", "coeficiente", "lag")
+# 
+# 
+# 
+# lag_grafico <- ggplot(glm_inv, aes(x = lag, y = coeficiente)) +
+#   geom_point() +
+#   geom_line() +
+#   geom_rect(xmin= 26, xmax= 27, ymin=-0.04, ymax=0.15, fill="coral2", size=0.1, alpha = 0.4,
+#             aes(text="Correlação \nsuperior a 0.06")) +
+#   labs(title = "Correlação entre Mobility Rate e Growth Rate entre Maio e Hoje em Diferentes Desfasamentos (lag)",
+#        x = "Lag (dias)",
+#        y = "Correlação entre MR e GR") +
+#   scale_x_continuous(breaks = seq(0, 30, 2))
+# 
+# ggplotly(lag_grafico)
+# 
+# # Ver relacao para lag 26
+# grmr_grafico_2 <- ggplot(gr_mr_lag, aes(x = mr_26, y = Growth_Rate)) +
+#   geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', mr_26,
 #                                           '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
 #   geom_smooth(method = "lm", color = "coral2", se = FALSE, formula = y~x, size = 0.7) +
 #   stat_poly_eq(formula = y~x,
@@ -883,12 +943,12 @@ ggplotly(grmr_maio_hoje_grafico, tooltip = "text")
 #   theme(plot.title = element_text(size=9),
 #         axis.title.x = element_text(size = 8),
 #         axis.title.y = element_text(size = 8)) +
-#   ylim(0, 1.5) +
-#   labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) para Lag de 10 dias",
+#   ylim(0.8, 1.1) +
+#   labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) entre Maio e Hoje para Lag de 26 dias",
 #        x = "MR",
 #        y = "GR") +
 #   scale_x_continuous(breaks = seq(0, 1, 0.1))
-#
+# 
 # ggplotly(grmr_grafico_2, tooltip = "text")
 
 
