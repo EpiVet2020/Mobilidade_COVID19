@@ -1,6 +1,9 @@
 # Influência da Mobilidade nos Casos de COVID19 🚘😷
 
-## Facebook f1a0
+## Facebook <i class="fab fa-facebook"></i>
+
+<div>Ícones feitos por <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/br/" title="Flaticon">www.flaticon.com</a></div>
+
 
 Com os ficheiros presentes neste repositório temos como objetivo responder à questão *De que forma a mobilidade está associada à ocorrência de novos casos?* 
 
@@ -15,6 +18,32 @@ Deste modo, queremos perceber se o movimento de pessoas está associado a um aum
 
 
 ## Google
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+.fa {
+  padding: 20px;
+  font-size: 30px;
+  width: 50px;
+  text-align: center;
+  text-decoration: none;
+  margin: 5px 2px;
+}
+
+.fa:hover {
+    opacity: 0.7;
+}
+
+.fa-google {
+  background: #dd4b39;
+  color: white;
+}
+</style>
+</head>
+</html> 
 
 Com os ficheiros presentes neste repositório temos como objetivo responder à questão *De que forma a mobilidade em diferentes categorias de locais está associada à ocorrência de novos casos?* 
 
