@@ -1,6 +1,6 @@
 # Influência da Mobilidade nos Casos de COVID19 🚘😷
 
-## Facebook <i class="fab fa-facebook-f"></i>
+## Facebook f1a0
 
 Com os ficheiros presentes neste repositório temos como objetivo responder à questão *De que forma a mobilidade está associada à ocorrência de novos casos?* 
 
