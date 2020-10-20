@@ -722,7 +722,8 @@ grmr_grafico <- ggplot(gr_mr_lag, aes(x = mr_17, y = Growth_Rate)) +
        y = "GR") +
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
-ggplotly(grmr_grafico, tooltip = "text")
+ggplotly(grmr_grafico, tooltip = "text") %>% 
+  layout(annotations = list(x = 0.7, y = 0.4, text = "y = 0.963 + 0.0473 x", showarrow = FALSE))
 
 
 #### Março - Maio
@@ -767,7 +768,8 @@ grmr_marco_maio_grafico <- ggplot(gr_mr_lag_marco_maio, aes(x = `mr_ 9`, y = Gro
        y = "GR") +
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
-ggplotly(grmr_marco_maio_grafico, tooltip = "text")
+ggplotly(grmr_marco_maio_grafico, tooltip = "text") %>% 
+  layout(annotations = list(x = 0.7, y = 0.4, text = "y = 0.866 + 0.258 x", showarrow = FALSE))
 
 #### Maio - Hoje
 
@@ -812,7 +814,8 @@ grmr_maio_hoje_grafico <- ggplot(gr_mr_lag_maio_hoje, aes(x = mr_26, y = Growth_
        y = "GR") +
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
-ggplotly(grmr_maio_hoje_grafico, tooltip = "text")
+ggplotly(grmr_maio_hoje_grafico, tooltip = "text") %>% 
+  layout(annotations = list(x = 0.85, y = 0.77, text = "y = 0.93 + 0.078 x", showarrow = FALSE))
 
 
 
