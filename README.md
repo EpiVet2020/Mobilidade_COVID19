@@ -1,10 +1,11 @@
 # Influência da Mobilidade nos Casos de COVID19 🚘😷
 
-### Facebook 
-
 Com os ficheiros presentes neste repositório temos como objetivo responder à questão *De que forma a mobilidade está associada à ocorrência de novos casos?* 
 
-Deste modo, queremos perceber se o movimento de pessoas está associado a um aumento do número de casos de COVID19. Queremos perceber ainda de que modo esses movimentos influenciam o número de casos quer a nível naional, quer a nível regional.
+Deste modo, queremos perceber se o movimento de pessoas está associado a um aumento do número de casos de COVID19. Queremos perceber ainda de que modo esses movimentos influenciam o número de casos quer a nível naional, quer a nível regional e se o local da movimentação provoca alterações nessa influência.
+
+
+## Facebook
 
 **Fontes** ℹ
 <ul>
@@ -15,8 +16,6 @@ Deste modo, queremos perceber se o movimento de pessoas está associado a um aum
 
 
 ### Google
-
-Com os ficheiros presentes neste repositório temos como objetivo responder à questão *De que forma a mobilidade em diferentes categorias de locais está associada à ocorrência de novos casos?* 
 
 **Fontes** ℹ
 <ul>
