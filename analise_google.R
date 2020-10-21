@@ -5,9 +5,10 @@ library(ggplot2)
 library(plotly)
 library(ggpmisc)
 library(corrr)
+library(ggthemes)
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32ILQLRFMW2HVSYRQXC7SAUT4")
+mobilidade <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32LFTRBQ7C7ITEKZMIS7SBPAQ")
 
 ## por as datas em formato data
 mobilidade$date <- as.Date(mobilidade$date,format = "%d-%m-%Y")
@@ -22,12 +23,14 @@ covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 
 # TRATAR BASE DE DADOS DA MOBILIDADE
 
-## Selecionar apenas dados de Portugal (não por distrito)
+## Selecionar apenas dados de Portugal (não por distrito) e a partir de 2020-03-03 porque e quanto temos valores de GR
 mobilidade_pt <- mobilidade %>% 
-  filter(sub_region_1 == "")
+  filter(sub_region_1 == "") %>% 
+  filter(date >= "2020-03-03") 
 
 ## Normalizar a mobilidade para que o 0 passe a representar a ausência de mobilidade
 mobilidade_pt[,9:14] = lapply(mobilidade_pt[,9:14], function(x) {(x/100)+1})
+
 
 
 # CALCULO TAXA DE CRESCIMENTO DE NOVOS CASOS
@@ -89,7 +92,8 @@ ggplot(gr_mobilidade_melt, aes(x = data, y = value, color = variable)) +
 
 
 
-# CORRELACAO
+# CORRELACAO MArCO - HOJE
+
 
 ## Criar variavel com valores do 0 ao 30
 
@@ -99,7 +103,6 @@ lags_google <- seq(30)
 
 lag_names_google <- paste("mr", formatC(lags_google, width = nchar(max(lags_google))), 
                    sep = "_")
-
 
 ## Funcao para fazer com que cada coluna seja a coluna anterior descendo uma linha
 
@@ -112,57 +115,170 @@ gr_mobilidade_lags <- gr_mobilidade %>%
   mutate_at(vars(retail_and_recreation_percent_change_from_baseline:residential_percent_change_from_baseline), funs_(lag_functions_google))
 
 
+## Tabela com a correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a 
+##taxa de crescimento de novos casos de marco a hoje
 
-
-# RETAIL E LAZER
-
-## Correlacao 
-
-correlacao_google_retail <- gr_mobilidade_lags[,-c(1:8)] %>% 
-  select(starts_with("retail_and_recreation_percent_change_from_baseline")) %>% 
-  mutate(Growth_Rate= gr_mobilidade_lags$Growth_Rate) %>% 
+correlacao_google <- gr_mobilidade_lags[,-c(1:8)] %>% 
   correlate() %>% 
-  focus(Growth_Rate)
-correlacao_google_retail[1] = 0:30
-names(correlacao_google_retail) = c("Lag", "correlacao")
+  focus(Growth_Rate) %>% 
+  mutate(Lag = rep(0:30, each=6))
 
-correlacao_google_retail_grafico <- ggplot(correlacao_google_retail, aes(x = Lag, y = correlacao)) +
+correlacao_google[1] = rep(c("Retalho e Lazer", "Mercearias e Farmácias", "Parques", "Estações Transp. Público", "Locais de Trabalho",
+                             "Residencial"), times=31)
+names(correlacao_google)[1:2] <-c("Categoria de local", "Correlacao")  
+
+
+## Fazer um grafico da correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a 
+##taxa de crescimento de novos casos de marco a hoje
+
+correlacao_google_grafico <- ggplot(correlacao_google, aes(x = Lag, y = Correlacao, color= `Categoria de local`)) +
   geom_point(aes(text = paste('Lag: ', Lag,
-                              '<br>Correlação: ', correlacao))) +
+                              '<br>Correlação: ', Correlacao,
+                              '<br>Categoria de local: ', `Categoria de local`))) +
   geom_line() +
-  geom_rect(xmin= 23, xmax= 24, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
-            aes(fill="Correlação \nsuperior a 0.4")) +
-  theme(legend.title = element_blank(),
-        plot.title = element_text(size=11),
-        legend.text = element_text(size=6),
+  facet_wrap(.~`Categoria de local`)+
+  theme(plot.title = element_text(size=12, face = "bold"),
+        legend.text = element_text(size=8),
+        legend.title = element_blank(),
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9)) +
-  labs(title = "Correlação entre Taxa de Mobilidade (MR) em Retail e Lazer e Taxa de Crescimento \nde Novos Casos (GR) em Diferentes Desfasamentos (Lag)",
+  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) entre Março e Hoje",
        x = "Lag (dias)",
-       y = "Correlação entre MR em Retail e Lazer e GR") +
-  scale_x_continuous(breaks = seq(0, 30, 2))
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 4))
 
-ggplotly(correlacao_google_retail_grafico, tooltip = "text")
+ggplotly(correlacao_google_grafico, tooltip = "text")
 
 
-## Ver relacao para lag 24 dias
 
-relacao_retail_gr_grafico <- ggplot(gr_mobilidade_lags, aes(x = retail_and_recreation_percent_change_from_baseline_mr_24, y = Growth_Rate)) +
-  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', retail_and_recreation_percent_change_from_baseline_mr_24,
-                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
-  geom_smooth(method = "lm", color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
-  stat_poly_eq(formula = y~x, 
-               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
-               parse = TRUE) +  
-  theme(plot.title = element_text(size=11),
+
+# CORRELACAO MARCO - MAIO
+
+## Tabela com a correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a 
+##taxa de crescimento de novos casos de marco a maio
+
+gr_mobilidade_lags_marco_maio <- gr_mobilidade_lags %>% 
+  filter(data <= "2020-05-11")
+
+correlacao_google_marco_maio <- gr_mobilidade_lags_marco_maio[,-c(1:8)] %>% 
+  correlate() %>% 
+  focus(Growth_Rate) %>% 
+  mutate(Lag = rep(0:30, each=6))
+
+correlacao_google_marco_maio[1] = rep(c("Retalho e Lazer", "Mercearias e Farmácias", "Parques", "Estações Transp. Público", "Locais de Trabalho",
+                             "Residencial"), times=31)
+names(correlacao_google_marco_maio)[1:2] <-c("Categoria de local", "Correlacao")  
+
+
+## Fazer um grafico da correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a
+##taxa de crescimento de novos casos de marco e maio
+
+correlacao_google_marco_maio_grafico <- ggplot(correlacao_google_marco_maio, aes(x = Lag, y = Correlacao, color= `Categoria de local`)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', Correlacao,
+                              '<br>Categoria de local: ', `Categoria de local`))) +
+  geom_line() +
+  geom_rect(xmin= c(8, 8, 8, 4, 4, 4), xmax= c(9, 9, 9, 10, 5, 6),
+            ymin=-1, ymax=1, fill = c("#F564E3", "#00BA38", "#00BFC4", "#F8766D", "#B79F00", "#619CFF"), size=0.1,
+            alpha = 0.4,data = correlacao_google[1:6,],
+            aes(text= c("Correlação \nsuperior a 0.8", "Correlação \nsuperior a 0.7", "Correlação \nsuperior a 0.75",
+                        "Correlação \nsuperior a 0.8", "Correlação \nsuperior a 0.8", "Correlação \ninferior a -0.75"))) +
+  facet_wrap(.~`Categoria de local`)+
+  theme(plot.title = element_text(size=11, face = "bold"),
+        legend.text = element_text(size=8),
+        legend.title = element_blank(),
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9)) +
-  ylim(0.5, 1.3) +
-  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) em Retail e Lazer para Lag de 24 dias",
-       x = "MR em Retail e Lazer para Lag de 24 dias",
-       y = "GR") +
-  scale_x_continuous(breaks = seq(0, 1, 0.1))
+  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) de Março a Maio",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 4)) + 
+  scale_y_continuous(breaks = seq(-0.8, 0.8, 0.2))
 
-ggplotly(relacao_retail_gr_grafico, tooltip = "text") %>% 
-  layout(annotations = list(x = 0.7, y = 0.7, text = "y = 0.957 + 0.0727 x", showarrow = FALSE))
+ggplotly(correlacao_google_marco_maio_grafico, tooltip = "text")
+
+
+## Ver relacao para lags otimos de marco a maio
+
+### Selecionar as colunas para as diferentes categorias de local com o lag otimo calculado anteriormente
+relacao_marco_maio <- gr_mobilidade_lags_marco_maio %>% 
+  select(Growth_Rate, `transit_stations_percent_change_from_baseline_mr_ 5`,`workplaces_percent_change_from_baseline_mr_ 5`,
+         `grocery_and_pharmacy_percent_change_from_baseline_mr_ 9`, `parks_percent_change_from_baseline_mr_ 9`, 
+         `residential_percent_change_from_baseline_mr_ 5`,`retail_and_recreation_percent_change_from_baseline_mr_ 9`)
+
+### Dar nomes as colunas
+names(relacao_marco_maio)[-1] <- c("Estações Transp. Público Lag 5 dias", "Locais de Trabalho Lag 5 dias", 
+                                   "Mercearias e Farmácias Lag 9 dias", "Parques Lag 9 dias",
+                                   "Residencial Lag 5 dias","Retalho e Lazer Lag 9 dias")
+
+### Fazer um melt para ficarmos com apenas 3 colunas
+relacao_marco_maio_melt <- melt(relacao_marco_maio, id.vars = "Growth_Rate")
+names(relacao_marco_maio_melt)[-1] <- c("Categoria de Local", "MR")
+
+
+## Fazer um grafico da relacao da mobilidade para cada categoria de local para lag otimo com a
+##taxa de crescimento de novos entre casos de marco e maio
+ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria de Local`)) +
+  geom_point(size = 1, aes(text = paste('Taxa de Mobilidade: ', MR,
+                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate,
+                                          '<br>Categoria de Local: ', `Categoria de Local`))) +
+  facet_wrap(relacao_marco_maio_melt$`Categoria de Local`)+
+  geom_smooth(method = "lm", se = FALSE, formula = y~x, size = 1) +
+  stat_poly_eq(formula = y~x,
+               aes(label = paste(..eq.label..)),
+               parse = TRUE, label.y = 0.9) +
+  theme(plot.title = element_text(size=11, face = "bold"),
+        legend.title = element_blank(),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9)) +
+  ylim(0.8, 1.3) +
+  labs(title = "Relação da MR com a GR de Diferentes Categorias para o respetivo Lag Ótimo entre Março e Maio",
+       x = "MR para Lag Ótimo",
+       y = "GR") +
+   scale_x_continuous(breaks = seq(0, 1.6, 0.2))
+
+
+
+
+
+# CORRELACAO MAIO - HOJE
+
+
+## Tabela com a correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a 
+##taxa de crescimento de novos casos de maio a hoje
+
+gr_mobilidade_lags_maio_hoje <- gr_mobilidade_lags %>% 
+  filter(data > "2020-05-11")
+
+correlacao_google_maio_hoje <- gr_mobilidade_lags_maio_hoje[,-c(1:8)] %>% 
+  correlate() %>% 
+  focus(Growth_Rate) %>% 
+  mutate(Lag = rep(0:30, each=6))
+
+correlacao_google_maio_hoje[1] = rep(c("Retalho e Lazer", "Mercearias e Farmácias", "Parques", "Estações Transp. Público", "Locais de Trabalho",
+                                        "Residencial"), times=31)
+names(correlacao_google_maio_hoje)[1:2] <-c("Categoria de local", "Correlacao")  
+
+
+## Fazer um grafico da correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a
+##taxa de crescimento de novos casos de maio a hoje
+
+correlacao_google_maio_hoje_grafico <- ggplot(correlacao_google_maio_hoje, aes(x = Lag, y = Correlacao, color= `Categoria de local`)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', Correlacao,
+                              '<br>Categoria de local: ', `Categoria de local`))) +
+  geom_line() +
+  facet_wrap(.~`Categoria de local`)+
+  theme(plot.title = element_text(size=11, face = "bold"),
+        legend.text = element_text(size=8),
+        legend.title = element_blank(),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9)) +
+  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) de Maio a Hoje",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 4))
+
+ggplotly(correlacao_google_maio_hoje_grafico, tooltip = "text")
+
 
