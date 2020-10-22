@@ -113,22 +113,22 @@ ggplotly(mobilidade_grafico, tooltip = "text")
 
 ## Criar variavel com valores do 0 ao 30
 
-lags_google <- seq(30)
+lags <- seq(30)
 
 ## Atribuir nome a cada futura coluna comecando com mr_ tendo depois o numero respetivo
 
-lag_names_google <- paste("mr", formatC(lags_google, width = nchar(max(lags_google))), 
+lag_names <- paste("mr", formatC(lags, width = nchar(max(lags))), 
                    sep = "_")
 
 ## Funcao para fazer com que cada coluna seja a coluna anterior descendo uma linha
 
-lag_functions_google <- setNames(paste("lag(., ", lags_google, ")"), lag_names_google)
+lag_functions <- setNames(paste("lag(., ", lags, ")"), lag_names)
 
 
 ## Adicionar as colunas anteriores a tabela correlacao
 
 gr_mobilidade_lags <- gr_mobilidade %>% 
-  mutate_at(vars(retail_and_recreation_percent_change_from_baseline:residential_percent_change_from_baseline), funs_(lag_functions_google))
+  mutate_at(vars(retail_and_recreation_percent_change_from_baseline:residential_percent_change_from_baseline), funs_(lag_functions))
 
 
 ## Tabela com a correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a 
