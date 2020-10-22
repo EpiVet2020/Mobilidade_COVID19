@@ -8,10 +8,10 @@ library(corrr)
 library(ggthemes)
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32LFTRBQ7C7ITEKZMIS7SBPAQ")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32JVLSU3MHIWEU4TZXK7SFHNC")
 
 ## por as datas em formato data
-mobilidade$date <- as.Date(mobilidade$date,format = "%d-%m-%Y")
+mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
 
 
 # IMPORTAR BASE DE DADOS DO COVID19 EM PORTUGAL DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
@@ -24,12 +24,12 @@ covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 # TRATAR BASE DE DADOS DA MOBILIDADE
 
 ## Selecionar apenas dados de Portugal (não por distrito) e a partir de 2020-03-03 porque e quanto temos valores de GR
-mobilidade_pt <- mobilidade %>% 
+mobilidade_google_pt <- mobilidade_google %>% 
   filter(sub_region_1 == "") %>% 
   filter(date >= "2020-03-03") 
 
 ## Normalizar a mobilidade para que o 0 passe a representar a ausência de mobilidade
-mobilidade_pt[,9:14] = lapply(mobilidade_pt[,9:14], function(x) {(x/100)+1})
+mobilidade_google_pt[,9:14] = lapply(mobilidade_google_pt[,9:14], function(x) {(x/100)+1})
 
 
 
@@ -52,7 +52,7 @@ gr_evolucao_grafico <- ggplot(gr, aes(x = data, y = Growth_Rate)) +
   labs(title = "Evolução da Taxa de Crescimento de Novos Casos (GR)",
        x = "Mês",
        y = "GR") +
-  theme(plot.title = element_text(size=14),
+  theme(plot.title = element_text(size=14, face = "bold"),
         axis.title.x = element_text(size=10),
         axis.title.y = element_text(size=10)) +
   scale_x_date(breaks = "months", date_labels = "%b")
@@ -64,10 +64,12 @@ ggplotly(gr_evolucao_grafico, tooltip = "text")
 
 # TABELA COM AS VÁRIAS MOBILIDADES E TAXA DE CRESCIMENTO DE NOVOS CASOS
 ## mudar nome da coluna de date para data
-names(mobilidade_pt)[8] = "data"
+names(mobilidade_google_pt)[8] = "data"
+
 
 ## juntar pela coluna da data
-gr_mobilidade <- left_join(mobilidade_pt, gr, by = "data")
+gr_mobilidade <- left_join(mobilidade_google_pt, gr, by = "data")
+
 
 
 
@@ -75,20 +77,34 @@ gr_mobilidade <- left_join(mobilidade_pt, gr, by = "data")
 
 gr_mobilidade_melt <- melt(gr_mobilidade[,8:14], id.vars = "data")
 
-ggplot(gr_mobilidade_melt, aes(x = data, y = value, color = variable)) +
+gr_mobilidade_melt <-  gr_mobilidade_melt %>% 
+  mutate_if(is.factor, as.character)
+
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "retail_and_recreation_percent_change_from_baseline"] <- "Retalho e Lazer"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "grocery_and_pharmacy_percent_change_from_baseline"] <- "Mercearias e Farmácias"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "parks_percent_change_from_baseline"] <- "Parques"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "transit_stations_percent_change_from_baseline"] <- "Estações Transp. Público"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "workplaces_percent_change_from_baseline"] <- "Locais de Trabalho"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "residential_percent_change_from_baseline"] <- "Residencial"
+
+
+mobilidade_grafico <- ggplot(gr_mobilidade_melt, aes(x = data, y = value, color = variable)) +
   geom_point(size = 1, aes(text = paste('Data: ', data,
                                           '<br>Taxa de Mobilidade:', value,
                                           '<br>Categoria do Local: ', variable))) +
   geom_smooth(aes(group=variable), se = FALSE, formula = y~x, size = 1) +
-  scale_color_discrete(name = "Categoria do Local", labels = c("Retalho e Lazer", "Mercearias e Farmácias", "Parques", "Estações Transp. Público", "Locais de Trabalho",
-                                "Residencial")) +
   labs(title = "Evolução da Taxa de Mobilidade (MR) para as Diferentes Categorias de Locais",
        x = "Mês",
        y = "MR") +
-  theme(plot.title = element_text(size=13),
+  theme(plot.title = element_text(size=13, face = "bold"),
         axis.title.x = element_text(size=10),
-        axis.title.y = element_text(size=10)) +
-  scale_x_date(breaks = "months", date_labels = "%b")
+        axis.title.y = element_text(size=10),
+        legend.title = element_blank()) +
+  scale_x_date(breaks = "months", date_labels = "%b")  +
+  geom_line(aes(y = 1, text = ""), size = 0.5, color = "black", linetype = "dotted")
+
+
+ggplotly(mobilidade_grafico, tooltip = "text")
 
 
 
@@ -218,6 +234,7 @@ names(relacao_marco_maio_melt)[-1] <- c("Categoria de Local", "MR")
 
 ## Fazer um grafico da relacao da mobilidade para cada categoria de local para lag otimo com a
 ##taxa de crescimento de novos entre casos de marco e maio
+
 ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria de Local`)) +
   geom_point(size = 1, aes(text = paste('Taxa de Mobilidade: ', MR,
                                           '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate,

@@ -17,9 +17,9 @@ library(corrr)
 
 
 # IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
-mobilidade_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
+mobilidade_r_facebook <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
 
-mobilidade_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
+mobilidade_c_facebook <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
 
 
 # IMPORTAR BASE DE DADOS DO COVID19 EM PORTUGAL DISPONIVEL EM: <https://github.com/dssg-pt/covid19pt-data>
@@ -46,20 +46,20 @@ mapa_distritos <- geojson_read("https://raw.githubusercontent.com/ufoe/d3js-geoj
 # TAXA DE MOBILIDADE
 
 ### Selecionar Portugal na base de dados
-mobilidade_pt <- mobilidade_r %>% 
+mobilidade_facebook_pt <- mobilidade_r_facebook %>% 
   filter(country=="PRT")
 
 ### Corrigir os nomes dos distritos
-mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "Santar-m" | mobilidade_pt$polygon_name == "SantarÃ©m"] <- "Santarem"
+mobilidade_facebook_pt$polygon_name[mobilidade_facebook_pt$polygon_name == "Santar-m" | mobilidade_facebook_pt$polygon_name == "SantarÃ©m"] <- "Santarem"
 
-mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "Set-bal" | mobilidade_pt$polygon_name == "SetÃºbal"] <- "Setubal"
+mobilidade_facebook_pt$polygon_name[mobilidade_facebook_pt$polygon_name == "Set-bal" | mobilidade_facebook_pt$polygon_name == "SetÃºbal"] <- "Setubal"
 
-mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "Bragan-a" | mobilidade_pt$polygon_name == "BraganÃ§a"] <- "Braganca"
+mobilidade_facebook_pt$polygon_name[mobilidade_facebook_pt$polygon_name == "Bragan-a" | mobilidade_facebook_pt$polygon_name == "BraganÃ§a"] <- "Braganca"
 
-mobilidade_pt$polygon_name[mobilidade_pt$polygon_name == "-vora" | mobilidade_pt$polygon_name == "Ã‰vora"] <- "Evora"
+mobilidade_facebook_pt$polygon_name[mobilidade_facebook_pt$polygon_name == "-vora" | mobilidade_facebook_pt$polygon_name == "Ã‰vora"] <- "Evora"
 
 ### Normalizar mobility rate para que o 0 passe a representar a ausência de mobilidade
-mobilidade_pt$all_day_bing_tiles_visited_relative_change = mobilidade_pt$all_day_bing_tiles_visited_relative_change + 1
+mobilidade_facebook_pt$all_day_bing_tiles_visited_relative_change = mobilidade_facebook_pt$all_day_bing_tiles_visited_relative_change + 1
 
 
 
@@ -90,7 +90,7 @@ pop_faro = 411468
 
 ### Selecionar na tabela da mobilidade as colunas da data, distrito e mobilidade
 
-mobilidade_distritos <- mobilidade_pt %>% 
+mobilidade_distritos <- mobilidade_facebook_pt %>% 
   select(ds, polygon_name, all_day_bing_tiles_visited_relative_change)
 names(mobilidade_distritos) = c("data", "distrito", "mobilidade")
 
@@ -147,7 +147,7 @@ ggplotly(mobilidade_nacional_grafico, tooltip = "text")
 ### Mapa do dia 2020-03-01 (antes da quarentena)
 
 #### Selecionar todas as linhas do dia 2020-03-01
-mobilidade_pre_covid <- as.data.frame(with(mobilidade_pt, mobilidade_pt[(ds=="2020-03-01")]))
+mobilidade_pre_covid <- as.data.frame(with(mobilidade_facebook_pt, mobilidade_facebook_pt[(ds=="2020-03-01")]))
 
 ###" Ordenar os distritos pela mesma ordem do que as do mapa
 ordem <- c("Setubal", "Azores", "Madeira", "Aveiro", "Leiria", "Viana do Castelo", "Beja", "Evora", "Faro", "Lisboa", "Portalegre", "Santarem", "Braga", "Braganca", "Castelo Branco", "Coimbra", "Guarda", "Porto", "Viseu", "Vila Real")
@@ -188,7 +188,7 @@ leaflet(mapa_distritos) %>%
 ### Mapa do dia 2020-04-10 (em quarentena)
 
 #### Selecionar todas as linhas do dia 2020-04-10
-mobilidade_covid_quarentena <- as.data.frame(with(mobilidade_pt, mobilidade_pt[(ds=="2020-04-10")]))
+mobilidade_covid_quarentena <- as.data.frame(with(mobilidade_facebook_pt, mobilidade_facebook_pt[(ds=="2020-04-10")]))
 
 #### Ordenar os distritos pela mesma ordem do que as do mapa
 mobilidade_covid_quarentena_ordem <- mobilidade_covid_quarentena %>% 
@@ -221,7 +221,7 @@ leaflet(mapa_distritos) %>%
 ### Mapa do dia 2020-09-14 (regresso às aulas)
 
 #### Selecionar todas as linhas do dia 2020-09-14
-mobilidade_covid_aulas <- as.data.frame(with(mobilidade_pt, mobilidade_pt[(ds=="2020-09-14")]))
+mobilidade_covid_aulas <- as.data.frame(with(mobilidade_facebook_pt, mobilidade_facebook_pt[(ds=="2020-09-14")]))
 
 #### Ordenar os distritos pela mesma ordem do que as do mapa
 mobilidade_covid_aulas_ordem <- mobilidade_covid_aulas %>% 
@@ -261,7 +261,7 @@ leaflet(mapa_distritos) %>%
 
 #### Data no eixo do x, mobility rate no eixo do y e distrito nas cores das linhas
 
-mobilidade_grafico <- ggplot(mobilidade_pt, aes(x = ds, y = all_day_bing_tiles_visited_relative_change, color = polygon_name)) +
+mobilidade_grafico <- ggplot(mobilidade_facebook_pt, aes(x = ds, y = all_day_bing_tiles_visited_relative_change, color = polygon_name)) +
   geom_point(size = 0.7,  aes(text = paste('Distrito:', polygon_name,
                                            '<br>Data: ', ds,
                                            '<br>Taxa de Mobilidade:', all_day_bing_tiles_visited_relative_change))) +
@@ -963,7 +963,7 @@ ggplotly(grmr_maio_hoje_grafico, tooltip = "text") %>%
 
 
 # ### lisboa
-# lisboa <- mobilidade_pt %>%
+# lisboa <- mobilidade_facebook_pt %>%
 #   filter(polygon_name == "Lisboa") %>%
 #   select(polygon_name, ds, all_day_bing_tiles_visited_relative_change)
 # names(lisboa) = c("distrito", "data", "mobilidade")
