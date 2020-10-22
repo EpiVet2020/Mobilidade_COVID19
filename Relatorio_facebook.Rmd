@@ -128,11 +128,8 @@ covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-da
 
 
 # IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
-<<<<<<< HEAD:Relatorio.Rmd
-concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AQ6V32OBYVCEQ5WKVB6ADU27SADYO") %>% 
-=======
-concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTAWM5MMIIBP2VWZL6627R5IXS") %>% 
->>>>>>> a443f9ba53bf3dc084dc3b4feeb685e51ec57404:Relatorio_facebook.Rmd
+
+concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AQ6V32ORRJIPEYEVG7UW7TK7SF2FG") %>% 
   select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
 
 
@@ -1266,19 +1263,19 @@ browsable(
 )
 
 ```
-
+ 
 #
 
 <center>
-
-**Um trabalho de**
-
-Carolina Merca [`r icon::fa("linkedin")`](https://www.linkedin.com/in/carolina-merca-1783ba196/) e Raquel Costa [`r icon::fa("linkedin")`](https://www.linkedin.com/in/raquel-costa-881b5015a/) 
+  
+  **Um trabalho de**
+  
+  Carolina Merca [`r icon::fa("linkedin")`](https://www.linkedin.com/in/carolina-merca-1783ba196/) e Raquel Costa [`r icon::fa("linkedin")`](https://www.linkedin.com/in/raquel-costa-881b5015a/)
 
 karolmerka@gmail.com e raqueldelobocosta@gmail.com
 
 [`r icon::fa("github")`](https://github.com/EpiVet2020/Mobilidade_COVID19)
 
 </center>
-
+  
 
