@@ -8,7 +8,7 @@ library(corrr)
 library(ggthemes)
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32JVLSU3MHIWEU4TZXK7SFHNC")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32NFOTWT6PEUATFCJWC7SG77Y")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -72,10 +72,9 @@ gr_mobilidade <- left_join(mobilidade_google_pt, gr, by = "data")
 
 
 
-
 # GRAFICOS DA EVOLUCAO DAS DIFERENTES MOBILIDADES
 
-gr_mobilidade_melt <- melt(gr_mobilidade[,8:14], id.vars = "data")
+gr_mobilidade_melt <- melt(mobilidade_google_pt[,8:14], id.vars = "data")
 
 gr_mobilidade_melt <-  gr_mobilidade_melt %>% 
   mutate_if(is.factor, as.character)
@@ -101,7 +100,7 @@ mobilidade_grafico <- ggplot(gr_mobilidade_melt, aes(x = data, y = value, color 
         axis.title.y = element_text(size=10),
         legend.title = element_blank()) +
   scale_x_date(breaks = "months", date_labels = "%b")  +
-  geom_line(aes(y = 1, text = ""), size = 0.5, color = "black", linetype = "dotted")
+  geom_line(aes(y = 1, text = "Valor Padrão"), size = 0.5, color = "black", linetype = "dotted")
 
 
 ggplotly(mobilidade_grafico, tooltip = "text")
