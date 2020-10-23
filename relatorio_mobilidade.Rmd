@@ -1,18 +1,45 @@
----
-title: "Influência da Mobilidade no Crescimento de Novos Casos de COVID19"
-author: "Carolina e Raquel"
-date: "22/10/2020"
+--- 
+title: <center> <h1>**Influência da Mobilidade no Crescimento <br> de Novos Casos de COVID19**</h1> </center>
 output:
-  html_document:
+  html_document: 
     code_folding: hide
-    df_print: paged
-    theme: lumen
-    toc: yes
-    toc_float: yes
+
+
 
 ---
+
+
+<style type="text/css">
+.main-container {
+  max-width: 1300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+```{css, echo=FALSE}
+/* Whole document: */
+body{
+  font-size: 12pt;
+}
+
+/* unvisited link */
+a:link {
+  color: #4fa1b3;
+}
+
+/* visited link */
+a:visited {
+  color: #326b78;
+}
+
+```
+
+<br>
 
 ## **Introdução**
+***
+<br>
 
 Com esta análise temos como objetivo responder à questão *De que forma a mobilidade está associada à ocorrência de novos casos?* 
 
@@ -40,6 +67,8 @@ library(Ecfun)
 library(tibble)
 library(ggpmisc)
 library(corrr)
+library(ggiraph)
+library(grid)
 
 
 # IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
@@ -50,7 +79,7 @@ mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTATUK34A6GT2SW7PBZS7SLAG4")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTASM3LOXNGRARIPC3C27SMHD2")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -66,6 +95,8 @@ covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 ```
 
 ## **Taxa de Mobilidade (MR)**
+***
+<br>
 
 A base de dados da mobilidade do Facebook, apresenta valores entre -1 e 1. Os valores negativos indicam uma diminuição da movimentação de pessoas em Portugal quando comparado com o valor padrão do mesmo dia da semana antes do início da pandemia (o padrão utilizado foi a média de cada dia da semana de dia 2 a 29 de fevereiro de 2020) e os valores positivos indicam um aumento dessa movimentação. Os valores da base de dados da mobilidade do Google são semelhantes aos do Facebook, mas são apresentados em percentagem. O período de referência é no entanto diferente, uma vez que o dia de referência é o valor da mediana de cada dia da semana, do período de cinco semanas (3 de janeiro a 6 de fevereiro de 2020).
 
@@ -161,12 +192,12 @@ mobilidade_nacional$data <- as.Date(mobilidade_nacional$data,format = "%d-%m-%Y"
 mobilidade_nacional_grafico <- ggplot(mobilidade_nacional, aes(x = data, y = mobilidade_ponderada)) +
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
                                            '<br>Taxa de Mobilidade:', mobilidade_ponderada))) +
-  geom_smooth(se = FALSE, size = 0.7, color = "#64CEAA") +
+  geom_smooth(se = FALSE, size = 0.7, color = "#4fa1b3") +
   labs(title = "Evolução da Taxa de Mobilidade (MR) Nacional",
        x = "Mês",
        y = "MR") +
   theme_classic() +
-  theme(plot.title = element_text(size=13, face = "bold"),
+  theme(plot.title = element_text(size=10, face = "bold", hjust = 0.5),
         axis.title.x = element_text(size=10),
         axis.title.y = element_text(size=10),
         legend.title = element_blank()) +
@@ -174,7 +205,7 @@ mobilidade_nacional_grafico <- ggplot(mobilidade_nacional, aes(x = data, y = mob
   geom_line(aes(y = 1, text = "Valor Padrão"), size = 0.5, color = "black", linetype = "dotted") +
   scale_y_continuous(breaks = seq(0, 1.1, 0.2))
 
-ggplotly(mobilidade_nacional_grafico, tooltip = "text")
+mobilidade_nacional_grafico_interativo <- ggplotly(mobilidade_nacional_grafico, tooltip = "text")
 
 
 
@@ -200,23 +231,23 @@ gr_mobilidade_melt <- melt(mobilidade_google_pt[,8:14], id.vars = "data")
 gr_mobilidade_melt <-  gr_mobilidade_melt %>% 
   mutate_if(is.factor, as.character)
 
-gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "retail_and_recreation_percent_change_from_baseline"] <- "Retalho e Lazer"
-gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "grocery_and_pharmacy_percent_change_from_baseline"] <- "Mercearias e Farmácias"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "retail_and_recreation_percent_change_from_baseline"] <- "Retalho e \nLazer"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "grocery_and_pharmacy_percent_change_from_baseline"] <- "Mercearias e \nFarmácias"
 gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "parks_percent_change_from_baseline"] <- "Parques"
-gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "transit_stations_percent_change_from_baseline"] <- "Estações Transp. Público"
-gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "workplaces_percent_change_from_baseline"] <- "Locais de Trabalho"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "transit_stations_percent_change_from_baseline"] <- "Estações \nTransp. Público"
+gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "workplaces_percent_change_from_baseline"] <- "Locais de \nTrabalho"
 gr_mobilidade_melt$variable[gr_mobilidade_melt$variable == "residential_percent_change_from_baseline"] <- "Residencial"
 
 
 mobilidade_grafico <- ggplot(gr_mobilidade_melt, aes(x = data, y = value, color = variable)) +
-  geom_point(size = 1, aes(text = paste('Data: ', data,
+  geom_point(size = 0.5, aes(text = paste('Data: ', data,
                                           '<br>Taxa de Mobilidade:', value,
                                           '<br>Categoria do Local: ', variable))) +
-  geom_smooth(aes(group=variable), se = FALSE, formula = y~x, size = 1) +
-  labs(title = "Evolução da Taxa de Mobilidade (MR) para as Diferentes Categorias de Locais",
+  geom_smooth(aes(group=variable), se = FALSE, formula = y~x, size = 0.7) +
+  labs(title = "Evolução da Taxa de Mobilidade (MR) para as \nDiferentes Categorias de Locais",
        x = "Mês",
        y = "MR") +
-  theme(plot.title = element_text(size=10, face = "bold"),
+  theme(plot.title = element_text(size=10, face = "bold", hjust = 0.5),
         axis.title.x = element_text(size=10),
         axis.title.y = element_text(size=10),
         legend.title = element_blank()) +
@@ -224,16 +255,35 @@ mobilidade_grafico <- ggplot(gr_mobilidade_melt, aes(x = data, y = value, color 
   geom_line(aes(y = 1, text = "Valor Padrão"), size = 0.5, color = "black", linetype = "dotted")
 
 
-ggplotly(mobilidade_grafico, tooltip = "text")
+mobilidade_grafico_interativo <- ggplotly(mobilidade_grafico, tooltip = "text")
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      mobilidade_nacional_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      mobilidade_grafico_interativo
+    )
+  ))
+)
 
 ```
+
+<br>
 
 No gráfico da evolução da taxa de mobilidade nacional, podemos ver que desde o início da pandemia a curva da tendência da taxa de mobilidade tem sido sempre inferior à mobilidade utilizada como padrão (fevereiro), uma vez que a taxa de mobilidade é sempre inferior a 1. É possível verificar que nos meses da quarentena (abril e maio) a curva da tendência da taxa de mobilidade atingiu o seu valor mínimo, cerca de 0.6, o que significa que foram feitos 60% dos movimentos realizados em fevereiro, ou seja, uma redução de 40% das deslocações. A partir de maio, com o fim do isolamento obrigatório, a taxa de mobilidade subiu atingindo o seu valor máximo em meados de agosto, provavelmente devido a um maior número de movimentações, intrínseco ao período de férias. A partir de setembro, com o fim do período de férias, a taxa de mobilidade tem vindo a diminuir.
 
 O gráfico seguinte, mostra-nos a movimentação das pessoas por categoria de local. Durante a quarentena é visível que todas as categorias de locais tiveram uma quebra na taxa de mobilidade, exceto a categoria residencial, como esperado, uma vez que as pessoas se encontravam maioritariamente em casa. Após o fim do isolamento obrigatório, à exceção da categoria residencial, as taxas de mobilidade sofreram um incremento principalmente a categoria de parques, com valores muito acima do padrão. Isto pode ser explicado pelo facto de as pessoas preferirem convívios ao ar livre de forma a mitigar o contágio pelo vírus e/ou pelo padrão utilizado ser de janeiro a fevereiro onde é normal haver uma menor procura por estes locais. É possível verificar também que, mesmo durante o verão, as movimentações na categoria de retalho e lazer foram inferiores ao valor de referência. Por fim, é de notar que as categorias de estações de transportes públicos e de locais de trabalho são aquelas que se encontram com menores valores de taxa de mobilidade, muito abaixo do valor de referência. 
 
+<br>
+
 
 ## **Taxa de Crescimento de Novos Casos (GR)**
+***
+<br>
 
 Para perceber se a mobilidade afeta o número de novos casos, tivemos de calcular a taxa de crescimento de novos casos. Segundo o [*The Lancet*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1), a taxa de crescimento de novos casos calcula-se dividindo o logaritmo da média de novos casos dos últimos 3 dias pelo logaritmo da média de novos casos dos últimos 7 dias.
 
@@ -251,14 +301,14 @@ names(gr) <- c("data", "Growth_Rate")
 gr_evolucao_grafico <- ggplot(gr, aes(x = data, y = Growth_Rate)) +
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
                               '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
-  geom_smooth(color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  geom_smooth(color = "#4fa1b3", se = FALSE, formula = y~x, size = 0.7) +
   ylim(0.7, 1.5) + # ver se isto pode ser mesmo aplicado
   labs(title = "Evolução da Taxa de Crescimento de Novos Casos (GR)",
        x = "Mês",
        y = "GR") +
-  theme(plot.title = element_text(size=8, face="bold"),
-        axis.title.x = element_text(size=9),
-        axis.title.y = element_text(size=9)) +
+  theme(plot.title = element_text(size=10, face="bold", hjust = 0.5),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10)) +
   scale_x_date(breaks = "months", date_labels = "%b") +
   geom_line(aes(y = 1, text = "Valor Padrão"), size = 0.5, color = "black", linetype = "dotted")
   
@@ -273,13 +323,13 @@ rollmean_3_nacional <- as.data.frame(cbind(covid19pt[3:nrow(covid19pt),1], as.da
 rollmean_3_nacional_grafico <- ggplot(rollmean_3_nacional, aes(x = data, y = confirmados_novos)) + 
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
                                           '<br>Novos casos (Média):', confirmados_novos))) +
-  geom_smooth(color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  geom_smooth(color = "#4fa1b3", se = FALSE, formula = y~x, size = 0.7) +
   labs(title = "Evolução dos Novos Casos (Média dos Últimos 3 dias)",
        x = "Mês",
        y = "Novos Casos (Média dos Últimos 3 dias)") +
-  theme(plot.title = element_text(size=8, face="bold"),
-        axis.title.x = element_text(size=9),
-        axis.title.y = element_text(size=9)) +
+  theme(plot.title = element_text(size=10, face="bold", hjust = 0.5),
+        axis.title.x = element_text(size=10),
+        axis.title.y = element_text(size=10)) +
   scale_x_date(breaks = "months", date_labels = "%b")
 
 rollmean_3_nacional_grafico_interativo <- ggplotly(rollmean_3_nacional_grafico, tooltip = "text")
@@ -306,6 +356,8 @@ No segundo gráfico é possível verificar que  a taxa de crescimento de novos c
 
 
 ## **Desfasamento Ótimo**
+***
+<br>
 
 A mobilidade não tem efeitos imediatos no número de novos casos. Assim, temos de perceber quanto tempo demora até à ocorrência de uma alteração nesse número. Para isso considerámos que, quando a correlação entre a taxa de mobilidade e a taxa de crescimento de novos casos para diferentes desfasamentos é máxima, corresponde ao desfasamento ótimo.
 
@@ -351,8 +403,7 @@ correlacao_grafico <- ggplot(correlacao, aes(x = Lag, y = correlacao)) +
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
   theme(legend.title = element_blank(),
-        plot.title = element_text(size=10, face="bold"),
-        legend.text = element_text(size=6),
+        plot.title = element_text(size=10, face="bold", hjust = 0.5),
         axis.title.x = element_text(size = 10),
         axis.title.y = element_text(size = 10)) +
   labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) em Diferentes Desfasamentos (Lag) entre Março e Hoje",
@@ -360,7 +411,7 @@ correlacao_grafico <- ggplot(correlacao, aes(x = Lag, y = correlacao)) +
        y = "Correlação entre MR e GR") +
   scale_x_continuous(breaks = seq(0, 30, 2))
 
-ggplotly(correlacao_grafico, tooltip = "text")
+correlacao_grafico_interativo <- ggplotly(correlacao_grafico, tooltip = "text")
 
 
 
@@ -404,17 +455,32 @@ correlacao_google_grafico <- ggplot(correlacao_google, aes(x = Lag, y = Correlac
                               '<br>Categoria de local: ', `Categoria de local`))) +
   geom_line() +
   facet_wrap(.~`Categoria de local`)+
-  theme(plot.title = element_text(size=8, face = "bold"),
-        legend.text = element_text(size=8),
-        legend.title = element_blank(),
-        axis.title.x = element_text(size = 10),
-        axis.title.y = element_text(size = 10)) +
-  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) entre Março e Hoje",
+  theme(plot.title = element_text(size=10, face = "bold", hjust = 0.5),
+        legend.position="none",
+        axis.title.x = element_text(size = 10, margin = margin(t = 20, b = 20)),
+        axis.title.y = element_text(size = 10, margin = margin(r = 20, l = 20))) +
+  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em \nDiferentes Desfasamentos (Lag) entre Março e Hoje",
        x = "Lag (dias)",
        y = "Correlação entre MR e GR") +
   scale_x_continuous(breaks = seq(0, 30, 4))
 
-ggplotly(correlacao_google_grafico, tooltip = "text")
+correlacao_google_grafico_interativo <- girafe(code = print(correlacao_google_grafico),
+                                               options = list(opts_zoom(max = 5),
+                                                              opts_hover(css = "fill:black;")))
+
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      correlacao_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      correlacao_google_grafico_interativo
+    )
+  ))
+)
 
 
 ```
@@ -445,13 +511,12 @@ correlacao_marco_maio_grafico <- ggplot(correlacao_marco_maio, aes(x = Lag, y = 
   geom_point(aes(text = paste('Lag: ', Lag,
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
-  geom_rect(xmin= 8, xmax= 10, ymin=-1, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+  geom_rect(xmin= 4, xmax= 17, ymin=-1, ymax=1, fill="#4fa1b3", size=0.1, alpha = 0.4, 
             aes(text="Correlação \nsuperior a 0.75")) +
   theme(legend.title = element_blank(),
-        plot.title = element_text(size=9),
-        legend.text = element_text(size=6),
-        axis.title.x = element_text(size = 8),
-        axis.title.y = element_text(size = 8)) +
+        plot.title = element_text(size=10, hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10)) +
   labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) entre Março e Maio em Diferentes Desfasamentos (Lag)",
        x = "Lag (dias)",
        y = "Correlação entre MR e GR") +
@@ -463,13 +528,13 @@ correlacao_marco_maio_grafico_interativo <- ggplotly(correlacao_marco_maio_grafi
 grmr_marco_maio_grafico <- ggplot(gr_mr_lag_marco_maio, aes(x = `mr_ 9`, y = Growth_Rate)) +
   geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', `mr_ 9`,
                                           '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
-  geom_smooth(method = "lm", color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  geom_smooth(method = "lm", color = "#4fa1b3", se = FALSE, formula = y~x, size = 0.7) +
   stat_poly_eq(formula = y~x, 
                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
                parse = TRUE) +  
-  theme(plot.title = element_text(size=9),
-        axis.title.x = element_text(size = 8),
-        axis.title.y = element_text(size = 8)) +
+  theme(plot.title = element_text(size=10, hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10)) +
   ylim(0, 1.5) +
   labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) entre Março e Maio para Lag de 9 dias",
        x = "MR",
@@ -535,18 +600,27 @@ correlacao_google_marco_maio_grafico <- ggplot(correlacao_google_marco_maio, aes
             aes(text= c("Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75",
                         "Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75", "Correlação \ninferior a -0.75"))) +
   facet_wrap(.~`Categoria de local`)+
-  theme(plot.title = element_text(size=11, face = "bold"),
-        legend.text = element_text(size=8),
-        legend.title = element_blank(),
-        axis.title.x = element_text(size = 9),
-        axis.title.y = element_text(size = 9)) +
-  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) de Março a Maio",
-       x = "Lag (dias)",
+  theme(plot.title = element_text(size=10, hjust = 0.5, face = "bold"),
+        legend.position = "none",
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10)) +
+  labs(x = "Lag (dias)",
        y = "Correlação entre MR e GR") +
   scale_x_continuous(breaks = seq(0, 30, 4)) + 
   scale_y_continuous(breaks = seq(-0.8, 0.8, 0.2))
 
-ggplotly(correlacao_google_marco_maio_grafico, tooltip = "text")
+correlacao_google_marco_maio_grafico_interativo <- ggplotly(correlacao_google_marco_maio_grafico, tooltip = "text") %>%
+  layout(annotations=list(text="Correlação entre a MR para Diferentes Categorias de Locais e a GR em \nDiferentes Desfasamentos (Lag) de Março a Maio",xref="paper",x=0.5,yref="paper",y=1,yshift=30,showarrow=FALSE, font=list(size=15)))
+
+#funcao para mover titulo dos eixos
+layout_ggplotly <- function(gg, x = -0.06, y = -0.06){
+  gg[['x']][['layout']][['annotations']][[1]][['y']] <- x
+  gg[['x']][['layout']][['annotations']][[2]][['x']] <- y
+  gg
+}
+
+layout_ggplotly(correlacao_google_marco_maio_grafico_interativo)
+
 
 
 ## Ver relacao para lags otimos de marco a maio
@@ -578,15 +652,17 @@ ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria 
   stat_poly_eq(formula = y~x,
                aes(label = paste(..eq.label..)),
                parse = TRUE, label.y = 0.9) +
-  theme(plot.title = element_text(size=11, face = "bold"),
-        legend.title = element_blank(),
-        axis.title.x = element_text(size = 9),
-        axis.title.y = element_text(size = 9)) +
+  theme(plot.title = element_text(size=10, face = "bold", hjust = 0.5),
+        legend.position = "none",
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10)) +
   ylim(0.8, 1.3) +
-  labs(title = "Relação da MR com a GR de Diferentes Categorias para o respetivo Lag Ótimo entre Março e Maio",
+  labs(title = "Relação da MR com a GR de Diferentes Categorias para o \nRespetivo Lag Ótimo entre Março e Maio",
        x = "MR para Lag Ótimo",
        y = "GR") +
    scale_x_continuous(breaks = seq(0, 1.6, 0.2))
+
+
 
 ```
 
@@ -617,16 +693,15 @@ correlacao_maio_hoje_grafico <- ggplot(correlacao_maio_hoje, aes(x = Lag, y = co
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
   theme(legend.title = element_blank(),
-        plot.title = element_text(size=9),
-        legend.text = element_text(size=6),
-        axis.title.x = element_text(size = 8),
-        axis.title.y = element_text(size = 8)) +
+        plot.title = element_text(size=10, face="bold", hjust = 0.5),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10)) +
   labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) de Maio a Hoje em Diferentes Desfasamentos (Lag)",
        x = "Lag (dias)",
        y = "Correlação entre MR e GR") +
   scale_x_continuous(breaks = seq(0, 30, 2))
 
-ggplotly(correlacao_maio_hoje_grafico, tooltip = "text")
+correlacao_maio_hoje_grafico_interativo <- ggplotly(correlacao_maio_hoje_grafico, tooltip = "text")
 
 
 # Google
@@ -658,18 +733,30 @@ correlacao_google_maio_hoje_grafico <- ggplot(correlacao_google_maio_hoje, aes(x
                               '<br>Categoria de local: ', `Categoria de local`))) +
   geom_line() +
   facet_wrap(.~`Categoria de local`)+
-  theme(plot.title = element_text(size=11, face = "bold"),
-        legend.text = element_text(size=8),
-        legend.title = element_blank(),
-        axis.title.x = element_text(size = 9),
-        axis.title.y = element_text(size = 9)) +
-  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) de Maio a Hoje",
+  theme(plot.title = element_text(size=10, face = "bold", hjust = 0.5),
+        legend.position = "none",
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10)) +
+  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em \nDiferentes Desfasamentos (Lag) de Maio a Hoje",
        x = "Lag (dias)",
        y = "Correlação entre MR e GR") +
   scale_x_continuous(breaks = seq(0, 30, 4))
 
-ggplotly(correlacao_google_maio_hoje_grafico, tooltip = "text")
+correlacao_google_maio_hoje_grafico_interativo <- ggplotly(correlacao_google_maio_hoje_grafico, tooltip = "text")
 
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      correlacao_maio_hoje_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      correlacao_google_maio_hoje_grafico_interativo
+    )
+  ))
+)
 
 ```
 
@@ -681,7 +768,8 @@ Assim podemos concluir que, tanto para a taxa de mobilidade nacional como para a
 
 
 ## **Conclusão**
-
+***
+<br>
 
 Com esta análise podemos concluir que a mobilidade da população influencia o número de novos casos apenas quando não existem implementadas medidas de mitigação da COVID19. Nestas circunstâncias o desfasamento ótimo é de 7 a 9 dias, o que significa que as alterações na mobilidade só vão ter repercussões no número de novos casos passados 7 a 9 dias. Para além disso, é possível concluir que o destino das deslocações não tem grande influência no aumento deste número, à exceção da mobilidade na área residencial em que o seu aumento influencia fortemente a diminuição do número de novos casos.
 

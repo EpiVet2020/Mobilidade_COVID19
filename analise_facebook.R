@@ -627,7 +627,7 @@ ggplot(relacao_grmr, aes(value, Growth_Rate, fill = variable)) +
 
 #### Grafico Marco - Maio
 gr_mr_lag_marco_maio <- gr_mr_lag %>% 
-  filter(data >= "2020-03-03" & data <= "2020-05-11")
+  filter(data >= "2020-03-03" & data <= "2020-05-02")
 
 relacao_marco_maio <- melt(gr_mr_lag_marco_maio[,-1], id.vars = "Growth_Rate")
 
@@ -737,11 +737,10 @@ correlacao_marco_maio_grafico <- ggplot(correlacao_marco_maio, aes(x = Lag, y = 
   geom_point(aes(text = paste('Lag: ', Lag,
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
-  geom_rect(xmin= 8, xmax= 10, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+  geom_rect(xmin= 4, xmax= 17, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
             aes(text="Correlação \nsuperior a 0.75")) +
   theme(legend.title = element_blank(),
         plot.title = element_text(size=9),
-        legend.text = element_text(size=6),
         axis.title.x = element_text(size = 8),
         axis.title.y = element_text(size = 8)) +
   labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) entre Março e Maio em Diferentes Desfasamentos (Lag)",

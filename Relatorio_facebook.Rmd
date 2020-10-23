@@ -878,7 +878,7 @@ correlacao_marco_maio_grafico <- ggplot(correlacao_marco_maio, aes(x = Lag, y = 
   geom_point(aes(text = paste('Lag: ', Lag,
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
-  geom_rect(xmin= 8, xmax= 10, ymin=-2, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+  geom_rect(xmin= 4, xmax= 17, ymin=-2, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
             aes(text="Correlação \nsuperior a 0.75")) +
   theme(legend.title = element_blank(),
         plot.title = element_text(size=7.5),
