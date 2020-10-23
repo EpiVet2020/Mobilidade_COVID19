@@ -44,13 +44,13 @@ library(corrr)
 
 # IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
 
-# mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
+mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
 
-mobilidade_facebook_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
+#mobilidade_facebook_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32PXYTNIMWNPLVMIJNS7SHDFC")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTATUK34A6GT2SW7PBZS7SLAG4")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -79,7 +79,7 @@ Na base de dados do Facebook, uma vez que apenas temos a taxa de mobilidade por 
 # Facebook
 
 ## Selecionar Portugal na base de dados
-mobilidade_facebook_pt <- mobilidade_facebook_c %>% 
+mobilidade_facebook_pt <- mobilidade_facebook_r %>% 
   filter(country=="PRT")
 
 ## Corrigir os nomes dos distritos
@@ -307,7 +307,7 @@ No segundo gráfico é possível verificar que  a taxa de crescimento de novos c
 
 ## **Desfasamento Ótimo**
 
-A mobilidade não tem efeitos imediatos no número de novos casos. Assim, temos de perceber quanto tempo demora até à ocorrência de uma alteração nesse número. Para isso considerámos que, quando a correlação entre a taxa de mobilidade e a taxa de crescimento de novos casos é máxima, corresponde ao desfasamento ótimo.
+A mobilidade não tem efeitos imediatos no número de novos casos. Assim, temos de perceber quanto tempo demora até à ocorrência de uma alteração nesse número. Para isso considerámos que, quando a correlação entre a taxa de mobilidade e a taxa de crescimento de novos casos para diferentes desfasamentos é máxima, corresponde ao desfasamento ótimo.
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -419,6 +419,271 @@ ggplotly(correlacao_google_grafico, tooltip = "text")
 
 ```
 
-Ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, verificamos que a correlação é máxima quando o desfasamento é de 17 dias. No entanto, esta correlação é de apenas 0.25 o que indica uma fraca correlação entre as duas variáveis. Assim podemos concluir que, para o perído de março à atualidade, o aumento da taxa de crescimento de novos casos não é explicado pelo aumento da taxa de mobilidade.
+Ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, verificamos que a correlação é máxima quando o desfasamento é de 17 dias. No entanto, esta correlação é de apenas 0.25 o que indica uma fraca correlação entre as duas variáveis. Assim podemos concluir que, para o perído de março à atualidade, o aumento da taxa de crescimento de novos casos não é significativamente explicado pelo aumento da taxa de mobilidade. 
 
+O mesmo é verificado no gráfico da correlação por categoria de local uma vez que as correlações são menores que 0.5, mostrando uma baixa correlação como é explicado em [*Andrews University*](https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm). Por outro lado, todas as categorias de locais exceto as estações de transportes públicos, apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre março e a atualidade. Assim podemos concluir que, para o perído de março à atualidade, as variações na taxa de crescimento de novos casos não são significativamente explicadas pelas variações na taxa de mobilidade para as diferentes categorias de locais. 
+
+Com estas conclusões decidimos apresentar também, separadamente, a análise referente a 2 períodos distintos da pandemia. O primeiro é de março a maio, período no qual ainda não eram aplicadas algumas importantes medidas de mitigação, nomeadamente a obrigatoriedade do uso de máscaras em locais fechados. O segundo período é de maio à atualidade, no qual as medidas de mitigação já eram aplicadas mantendo-se semelhantes ao longo de todos os meses.
+
+```{r warning=FALSE, message=FALSE}
+
+# Facebook
+
+## Marco - Maio
+
+### correlacao
+gr_mr_lag_marco_maio <- gr_mr_lag %>% 
+  filter(data >= "2020-03-03" & data <= "2020-05-02")
+
+correlacao_marco_maio <- gr_mr_lag_marco_maio[-1] %>% 
+  correlate() %>% 
+  focus(Growth_Rate)
+correlacao_marco_maio[1] = 0:30
+names(correlacao_marco_maio) = c("Lag", "correlacao")
+
+correlacao_marco_maio_grafico <- ggplot(correlacao_marco_maio, aes(x = Lag, y = correlacao)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', correlacao))) +
+  geom_line() +
+  geom_rect(xmin= 8, xmax= 10, ymin=-1, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+            aes(text="Correlação \nsuperior a 0.75")) +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(size=9),
+        legend.text = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) entre Março e Maio em Diferentes Desfasamentos (Lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+
+correlacao_marco_maio_grafico_interativo <- ggplotly(correlacao_marco_maio_grafico, tooltip = "text")
+
+### Ver relacao para lag 9
+grmr_marco_maio_grafico <- ggplot(gr_mr_lag_marco_maio, aes(x = `mr_ 9`, y = Growth_Rate)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', `mr_ 9`,
+                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate))) +
+  geom_smooth(method = "lm", color = "#64CEAA", se = FALSE, formula = y~x, size = 0.7) +
+  stat_poly_eq(formula = y~x, 
+               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               parse = TRUE) +  
+  theme(plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  ylim(0, 1.5) +
+  labs(title = "Relação da Taxa de Crescimento de Novos Casos (GR) com a Taxa \nde Mobilidade (MR) entre Março e Maio para Lag de 9 dias",
+       x = "MR",
+       y = "GR") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+
+grmr_marco_maio_grafico_interativo <- ggplotly(grmr_marco_maio_grafico, tooltip = "text") %>% 
+  layout(annotations = list(x = 0.7, y = 0.4, text = "y = 0.866 + 0.258 x", showarrow = FALSE))
+
+
+
+browsable(
+  tagList(list(
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      correlacao_marco_maio_grafico_interativo
+    ),
+    tags$div(
+      style = 'width:50%;display:block;float:left;',
+      grmr_marco_maio_grafico_interativo
+    )
+  ))
+)
+
+```
+
+No gráfico à esquerda, verificámos que a correlação de março a maio é máxima quando o desfasamento é de 9 dias, apresentando o valor de cerca de 0.80, indicando uma forte correlação entre as duas variáveis.
+
+No gráfico à direita é possível ver que, para o desfasamento ótimo, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos. Por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos aumenta aproximadamente 0.258 unidades (declive da reta da regressão linear).
+
+Assim podemos concluir que, para o perído de março a maio, o aumento da taxa de crescimento de novos casos pode ser explicado pelo aumento da taxa de mobilidade. Apesar de se tratar de um período de quarentena onde a taxa de mobilidade diminuiu consideravelmente em relação ao padrão, as poucas deslocações que eram realizadas justificaram o aumento da taxa de crescimento de novos casos pela ausência de importantes medidas de mitigação como a obrigatoriedade de uso de máscaras em locais fechados, a existência de desinfetantes para uso da população e a limitação do número de pessoas em determinados espaços.
+
+```{r warning=FALSE, message=FALSE}
+# Google
+
+## MArço - Maio
+
+### Tabela com a correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a taxa de crescimento de novos casos de marco a maio
+
+gr_mobilidade_lags_marco_maio <- gr_mobilidade_lags %>% 
+  filter(data <= "2020-05-02")
+
+correlacao_google_marco_maio <- gr_mobilidade_lags_marco_maio[,-c(1:8)] %>% 
+  correlate() %>% 
+  focus(Growth_Rate) %>% 
+  mutate(Lag = rep(0:30, each=6))
+
+correlacao_google_marco_maio[1] = rep(c("Retalho e Lazer", "Mercearias e Farmácias", "Parques", "Estações Transp. Público", "Locais de Trabalho",
+                             "Residencial"), times=31)
+names(correlacao_google_marco_maio)[1:2] <-c("Categoria de local", "Correlacao")  
+
+
+### Fazer um grafico da correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a taxa de crescimento de novos casos de marco e maio
+
+correlacao_google_marco_maio_grafico <- ggplot(correlacao_google_marco_maio, aes(x = Lag, y = Correlacao, color= `Categoria de local`)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', Correlacao,
+                              '<br>Categoria de local: ', `Categoria de local`))) +
+  geom_line() +
+  geom_rect(xmin= c(3, 8.5, 4, 3, 3, 4), xmax= c(18, 9.5, 11, 18, 16, 15),
+            ymin=-1, ymax=1, fill = c("#F564E3", "#00BA38", "#00BFC4", "#F8766D", "#B79F00", "#619CFF"), size=0.1,
+            alpha = 0.4,data = correlacao_google[1:6,],
+            aes(text= c("Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75",
+                        "Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75", "Correlação \ninferior a -0.75"))) +
+  facet_wrap(.~`Categoria de local`)+
+  theme(plot.title = element_text(size=11, face = "bold"),
+        legend.text = element_text(size=8),
+        legend.title = element_blank(),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9)) +
+  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) de Março a Maio",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 4)) + 
+  scale_y_continuous(breaks = seq(-0.8, 0.8, 0.2))
+
+ggplotly(correlacao_google_marco_maio_grafico, tooltip = "text")
+
+
+## Ver relacao para lags otimos de marco a maio
+
+### Selecionar as colunas para as diferentes categorias de local com o lag otimo calculado anteriormente
+relacao_marco_maio <- gr_mobilidade_lags_marco_maio %>% 
+  select(Growth_Rate, `transit_stations_percent_change_from_baseline_mr_ 8`,`workplaces_percent_change_from_baseline_mr_ 7`,
+         `grocery_and_pharmacy_percent_change_from_baseline_mr_ 9`, `parks_percent_change_from_baseline_mr_ 9`, 
+         `residential_percent_change_from_baseline_mr_ 7`,`retail_and_recreation_percent_change_from_baseline_mr_ 9`)
+
+### Dar nomes as colunas
+names(relacao_marco_maio)[-1] <- c("Estações Transp. Público Lag 8 dias", "Locais de Trabalho Lag 7 dias", 
+                                   "Mercearias e Farmácias Lag 9 dias", "Parques Lag 9 dias",
+                                   "Residencial Lag 7 dias","Retalho e Lazer Lag 9 dias")
+
+### Fazer um melt para ficarmos com apenas 3 colunas
+relacao_marco_maio_melt <- melt(relacao_marco_maio, id.vars = "Growth_Rate")
+names(relacao_marco_maio_melt)[-1] <- c("Categoria de Local", "MR")
+
+
+## Fazer um grafico da relacao da mobilidade para cada categoria de local para lag otimo com a taxa de crescimento de novos entre casos de marco e maio
+
+ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria de Local`)) +
+  geom_point(size = 1, aes(text = paste('Taxa de Mobilidade: ', MR,
+                                          '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate,
+                                          '<br>Categoria de Local: ', `Categoria de Local`))) +
+  facet_wrap(relacao_marco_maio_melt$`Categoria de Local`)+
+  geom_smooth(method = "lm", se = FALSE, formula = y~x, size = 1) +
+  stat_poly_eq(formula = y~x,
+               aes(label = paste(..eq.label..)),
+               parse = TRUE, label.y = 0.9) +
+  theme(plot.title = element_text(size=11, face = "bold"),
+        legend.title = element_blank(),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9)) +
+  ylim(0.8, 1.3) +
+  labs(title = "Relação da MR com a GR de Diferentes Categorias para o respetivo Lag Ótimo entre Março e Maio",
+       x = "MR para Lag Ótimo",
+       y = "GR") +
+   scale_x_continuous(breaks = seq(0, 1.6, 0.2))
+
+```
+
+Relativamente às categorias de locais, no primeiro gráfico, verificámos que a correlação de março a maio foi sempre elevada (superior a 0.75 ou inferior a -0.75). A escolha do desfasamento ótimo foi baseada no valor máximo de correlação dentro do período em que a correlação se manteve superior a 0.75 ou inferior a -0.75. Os desfasamentos ótimos variaram entre os 7 e os 9 dias, o que está em concordância com o desfasamento ótimo da taxa de mobilidade nacional.
+
+No gráfico seguinte é possível ver que, para os vários desfasamentos ótimos, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos. Isto apenas não é verdade para a área residencial onde por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos diminui aproximadamente 0.419 unidades (declive da reta da regressão linear), sendo esta a categoria de local com maior influência na alteração do crescimento do número de novos casos.
+
+Assim podemos concluir que, para o perído de março a maio, as alterações na taxa de crescimento de novos casos podem ser explicadas pelas variações na taxa de mobilidade em todas as categorias de locais.
+
+```{r warning=FALSE, message=FALSE}
+
+# Facebook
+
+## Maio - hoje
+
+gr_mr_lag_maio_hoje <- left_join(gr, mobilidade_nacional, by = "data") %>% 
+  filter(data > "2020-05-02") %>% 
+  mutate_at(vars(mobilidade_ponderada), funs_(lag_functions))
+
+correlacao_maio_hoje <- gr_mr_lag_maio_hoje[-1] %>% 
+  correlate() %>% 
+  focus(Growth_Rate)
+correlacao_maio_hoje[1] = 0:30
+names(correlacao_maio_hoje) = c("Lag", "correlacao")
+
+correlacao_maio_hoje_grafico <- ggplot(correlacao_maio_hoje, aes(x = Lag, y = correlacao)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', correlacao))) +
+  geom_line() +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(size=9),
+        legend.text = element_text(size=6),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8)) +
+  labs(title = "Correlação entre Taxa de Mobilidade (MR) e Taxa de Crescimento \nde Novos Casos (GR) de Maio a Hoje em Diferentes Desfasamentos (Lag)",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 2))
+
+ggplotly(correlacao_maio_hoje_grafico, tooltip = "text")
+
+
+# Google
+
+# Maio - hoje
+
+## Tabela com a correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a 
+##taxa de crescimento de novos casos de maio a hoje
+
+gr_mobilidade_lags_maio_hoje <- gr_mobilidade_lags %>% 
+  filter(data > "2020-05-02")
+
+correlacao_google_maio_hoje <- gr_mobilidade_lags_maio_hoje[,-c(1:8)] %>% 
+  correlate() %>% 
+  focus(Growth_Rate) %>% 
+  mutate(Lag = rep(0:30, each=6))
+
+correlacao_google_maio_hoje[1] = rep(c("Retalho e Lazer", "Mercearias e Farmácias", "Parques", "Estações Transp. Público", "Locais de Trabalho",
+                                        "Residencial"), times=31)
+names(correlacao_google_maio_hoje)[1:2] <-c("Categoria de local", "Correlacao")  
+
+
+## Fazer um grafico da correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a
+##taxa de crescimento de novos casos de maio a hoje
+
+correlacao_google_maio_hoje_grafico <- ggplot(correlacao_google_maio_hoje, aes(x = Lag, y = Correlacao, color= `Categoria de local`)) +
+  geom_point(aes(text = paste('Lag: ', Lag,
+                              '<br>Correlação: ', Correlacao,
+                              '<br>Categoria de local: ', `Categoria de local`))) +
+  geom_line() +
+  facet_wrap(.~`Categoria de local`)+
+  theme(plot.title = element_text(size=11, face = "bold"),
+        legend.text = element_text(size=8),
+        legend.title = element_blank(),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9)) +
+  labs(title = "Correlação entre a MR para Diferentes Categorias de Locais e a GR em Diferentes Desfasamentos (Lag) de Maio a Hoje",
+       x = "Lag (dias)",
+       y = "Correlação entre MR e GR") +
+  scale_x_continuous(breaks = seq(0, 30, 4))
+
+ggplotly(correlacao_google_maio_hoje_grafico, tooltip = "text")
+
+
+```
+
+Por fim, ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, para o período de maio até à atualidade, verificamos que a correlação é máxima quando o desfasamento é de 26 dias. No entanto, esta correlação é de apenas 0.20 o que indica uma fraca correlação entre as duas variáveis.
+
+Relativamente às categorias de locais o mesmo é verificado, uma vez que as correlações são menores que 0.5 e apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões, não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre maio e a atualidade.
+
+Assim podemos concluir que, tanto para a taxa de mobilidade nacional como para as diferentes categorias de locais, para o perído de maio à atualidade, as alterações na taxa de crescimento de novos casos não são explicadas pelas variações na taxa de mobilidade. Isto pode ser devido ao facto de, a partir de maio, terem sido implementadas medidas de mitigação mais rigorosas. Por isso, mesmo quando ocorre um aumento ou diminuição da taxa de mobilidade esta não se reflete numa alteração na taxa de crescimento de novos casos.
+
+
+## **Conclusão**
+
+
+Com esta análise podemos concluir que a mobilidade da população influencia o número de novos casos apenas quando não existem implementadas medidas de mitigação da COVID19. Nestas circunstâncias o desfasamento ótimo é de 7 a 9 dias, o que significa que as alterações na mobilidade só vão ter repercussões no número de novos casos passados 7 a 9 dias. Para além disso, é possível concluir que o destino das deslocações não tem grande influência no aumento deste número, à exceção da mobilidade na área residencial em que o seu aumento influencia fortemente a diminuição do número de novos casos.
+
+Esta conclusão reforça, assim, a grande importância das medidas de mitigação implementadas como a obrigatoriedade do uso de máscara e a limitação do número de pessoas em locais fechados, a lavagem e desinfeção regular das mãos e a recomendação da adoção do distanciamento social.
 

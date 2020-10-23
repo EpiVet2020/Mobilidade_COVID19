@@ -173,7 +173,7 @@ ggplotly(correlacao_google_grafico, tooltip = "text")
 ##taxa de crescimento de novos casos de marco a maio
 
 gr_mobilidade_lags_marco_maio <- gr_mobilidade_lags %>% 
-  filter(data <= "2020-05-11")
+  filter(data <= "2020-05-02")
 
 correlacao_google_marco_maio <- gr_mobilidade_lags_marco_maio[,-c(1:8)] %>% 
   correlate() %>% 
@@ -193,11 +193,11 @@ correlacao_google_marco_maio_grafico <- ggplot(correlacao_google_marco_maio, aes
                               '<br>Correlação: ', Correlacao,
                               '<br>Categoria de local: ', `Categoria de local`))) +
   geom_line() +
-  geom_rect(xmin= c(8, 8, 8, 4, 4, 4), xmax= c(9, 9, 9, 10, 5, 6),
+  geom_rect(xmin= c(3, 8.5, 4, 3, 3, 4), xmax= c(18, 9.5, 11, 18, 16, 15),
             ymin=-1, ymax=1, fill = c("#F564E3", "#00BA38", "#00BFC4", "#F8766D", "#B79F00", "#619CFF"), size=0.1,
             alpha = 0.4,data = correlacao_google[1:6,],
-            aes(text= c("Correlação \nsuperior a 0.8", "Correlação \nsuperior a 0.7", "Correlação \nsuperior a 0.75",
-                        "Correlação \nsuperior a 0.8", "Correlação \nsuperior a 0.8", "Correlação \ninferior a -0.75"))) +
+            aes(text= c("Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75",
+                        "Correlação \nsuperior a 0.75", "Correlação \nsuperior a 0.75", "Correlação \ninferior a -0.75"))) +
   facet_wrap(.~`Categoria de local`)+
   theme(plot.title = element_text(size=11, face = "bold"),
         legend.text = element_text(size=8),
@@ -217,14 +217,14 @@ ggplotly(correlacao_google_marco_maio_grafico, tooltip = "text")
 
 ### Selecionar as colunas para as diferentes categorias de local com o lag otimo calculado anteriormente
 relacao_marco_maio <- gr_mobilidade_lags_marco_maio %>% 
-  select(Growth_Rate, `transit_stations_percent_change_from_baseline_mr_ 5`,`workplaces_percent_change_from_baseline_mr_ 5`,
+  select(Growth_Rate, `transit_stations_percent_change_from_baseline_mr_ 8`,`workplaces_percent_change_from_baseline_mr_ 7`,
          `grocery_and_pharmacy_percent_change_from_baseline_mr_ 9`, `parks_percent_change_from_baseline_mr_ 9`, 
-         `residential_percent_change_from_baseline_mr_ 5`,`retail_and_recreation_percent_change_from_baseline_mr_ 9`)
+         `residential_percent_change_from_baseline_mr_ 7`,`retail_and_recreation_percent_change_from_baseline_mr_ 9`)
 
 ### Dar nomes as colunas
-names(relacao_marco_maio)[-1] <- c("Estações Transp. Público Lag 5 dias", "Locais de Trabalho Lag 5 dias", 
+names(relacao_marco_maio)[-1] <- c("Estações Transp. Público Lag 8 dias", "Locais de Trabalho Lag 7 dias", 
                                    "Mercearias e Farmácias Lag 9 dias", "Parques Lag 9 dias",
-                                   "Residencial Lag 5 dias","Retalho e Lazer Lag 9 dias")
+                                   "Residencial Lag 7 dias","Retalho e Lazer Lag 9 dias")
 
 ### Fazer um melt para ficarmos com apenas 3 colunas
 relacao_marco_maio_melt <- melt(relacao_marco_maio, id.vars = "Growth_Rate")
@@ -264,7 +264,7 @@ ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria 
 ##taxa de crescimento de novos casos de maio a hoje
 
 gr_mobilidade_lags_maio_hoje <- gr_mobilidade_lags %>% 
-  filter(data > "2020-05-11")
+  filter(data > "2020-05-02")
 
 correlacao_google_maio_hoje <- gr_mobilidade_lags_maio_hoje[,-c(1:8)] %>% 
   correlate() %>% 

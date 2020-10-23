@@ -528,7 +528,7 @@ Como expectável, no início da pandemia a taxa de crescimento de novos casos er
 #### Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
 
 gr_marco_maio <- gr %>% 
-  filter(data >= "2020-03-03" & data <= "2020-05-11")
+  filter(data >= "2020-03-03" & data <= "2020-05-02")
 
 gr_marco_maio_evolucao_grafico <- ggplot(gr_marco_maio, aes(x = data, y = Growth_Rate)) +
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
@@ -550,7 +550,7 @@ gr_marco_maio_evolucao_grafico_interativo <- ggplotly(gr_marco_maio_evolucao_gra
 #### Grafico da evolucao da media de casos dos ultimos 3 dias
 
 rollmean_marco_maio <- rollmean_3_nacional %>% 
-  filter(data >= "2020-03-03" & data <= "2020-05-11")
+  filter(data >= "2020-03-03" & data <= "2020-05-02")
 
 rollmean_marco_maio_grafico <- ggplot(rollmean_marco_maio, aes(x = data, y = confirmados_novos)) + 
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
@@ -590,7 +590,7 @@ De maio a setembro a taxa de crescimento de novos casos foi sempre próxima de 1
 ```{r warning=FALSE, message=FALSE}
 #### Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
 gr_maio_hoje <- gr %>% 
-  filter(data > "2020-05-11")
+  filter(data > "2020-05-02")
 
 gr_maio_hoje_evolucao_grafico <- ggplot(gr_maio_hoje, aes(x = data, y = Growth_Rate)) +
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
@@ -612,7 +612,7 @@ gr_maio_hoje_evolucao_grafico_interativo <- ggplotly(gr_maio_hoje_evolucao_grafi
 #### Grafico da evolucao da media de casos dos ultimos 3 dias
 
 rollmean_maio_hoje<- rollmean_3_nacional %>% 
-  filter(data > "2020-05-11")
+  filter(data > "2020-05-02")
 
 rollmean_maio_hoje_grafico <- ggplot(rollmean_maio_hoje, aes(x = data, y = confirmados_novos)) + 
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
@@ -728,7 +728,7 @@ ggplot(relacao_grmr, aes(value, Growth_Rate, fill = variable)) +
 ```{r warning=FALSE, message=FALSE, fig.height=10, fig.width=12}
 #### Grafico Marco - Maio
 gr_mr_lag_marco_maio <- gr_mr_lag %>% 
-  filter(data >= "2020-03-03" & data <= "2020-05-11")
+  filter(data >= "2020-03-03" & data <= "2020-05-02")
 
 relacao_marco_maio <- melt(gr_mr_lag_marco_maio[,-1], id.vars = "Growth_Rate")
 
@@ -759,7 +759,7 @@ ggplot(relacao_marco_maio, aes(value, Growth_Rate, fill = variable)) +
 ```{r warning=FALSE, message=FALSE, fig.height=10, fig.width=12}
 #### Grafico Maio - Hoje
 gr_mr_lag_maio_hoje <- left_join(gr, mobilidade_nacional, by = "data") %>% 
-  filter(data > "2020-05-11") %>% 
+  filter(data > "2020-05-02") %>% 
   mutate_at(vars(mobilidade_ponderada), funs_(lag_functions))
 
 relacao_maio_hoje <- melt(gr_mr_lag_maio_hoje[,-1], id.vars = "Growth_Rate")
@@ -878,7 +878,7 @@ correlacao_marco_maio_grafico <- ggplot(correlacao_marco_maio, aes(x = Lag, y = 
   geom_point(aes(text = paste('Lag: ', Lag,
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
-  geom_rect(xmin= 9, xmax= 10, ymin=-2, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+  geom_rect(xmin= 8, xmax= 10, ymin=-2, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
             aes(text="Correlação \nsuperior a 0.75")) +
   theme(legend.title = element_blank(),
         plot.title = element_text(size=7.5),

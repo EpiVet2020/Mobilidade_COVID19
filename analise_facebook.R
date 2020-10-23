@@ -34,7 +34,7 @@ covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-da
 
 
 # IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
-concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTATDUOR5CNOFKP7S2KK7RV3LY") %>% 
+concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTATC5FBHGTCAYGSIS2K7SKYKS") %>% 
   select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
 
 
@@ -334,7 +334,7 @@ ggplotly(rollmean_3_nacional_grafico, tooltip = "text")
 #### Grafico da evolucao da taxa de crescimento de novos casos a nivel nacional
 
 gr_marco_maio <- gr %>% 
-  filter(data >= "2020-03-03" & data <= "2020-05-11")
+  filter(data >= "2020-03-03" & data <= "2020-05-02")
 
 gr_marco_maio_evolucao_grafico <- ggplot(gr_marco_maio, aes(x = data, y = Growth_Rate)) +
   geom_point(size = 0.7, aes(text = paste('Data: ', data,
@@ -652,7 +652,7 @@ ggplot(relacao_marco_maio, aes(value, Growth_Rate, fill = variable)) +
 #### Grafico Maio - Hoje
 
 gr_mr_lag_maio_hoje <- left_join(gr, mobilidade_nacional, by = "data") %>% 
-  filter(data > "2020-05-11") %>% 
+  filter(data > "2020-05-02") %>% 
   mutate_at(vars(mobilidade_ponderada), funs_(lag_functions))
 
 relacao_maio_hoje <- melt(gr_mr_lag_maio_hoje[,-1], id.vars = "Growth_Rate")
@@ -737,7 +737,7 @@ correlacao_marco_maio_grafico <- ggplot(correlacao_marco_maio, aes(x = Lag, y = 
   geom_point(aes(text = paste('Lag: ', Lag,
                               '<br>Correlação: ', correlacao))) +
   geom_line() +
-  geom_rect(xmin= 9, xmax= 10, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
+  geom_rect(xmin= 8, xmax= 10, ymin=-0.09, ymax=1, fill="#64CEAA", size=0.1, alpha = 0.4, 
             aes(text="Correlação \nsuperior a 0.75")) +
   theme(legend.title = element_blank(),
         plot.title = element_text(size=9),
