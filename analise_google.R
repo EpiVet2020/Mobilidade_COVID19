@@ -234,28 +234,28 @@ names(relacao_marco_maio_melt)[-1] <- c("Categoria de Local", "MR")
 ## Fazer um grafico da relacao da mobilidade para cada categoria de local para lag otimo com a
 ##taxa de crescimento de novos entre casos de marco e maio
 
-ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria de Local`)) +
-  geom_point(size = 1, aes(text = paste('Taxa de Mobilidade: ', MR,
+relacao_marco_maio_melt$annotations = rep(c("y = 0.948 + 0.183 x", "y = 0.911 + 0.217 x", "y = 0.886 + 0.193 x",
+                                            "y = 0.939 + 0.161 x", "y = 1.55 - 0.419 x", "y = 0.946 + 0.182 x"), each = 61)
+
+relacao_marco_maio_grafico <- ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria de Local`)) +
+  geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', MR,
                                           '<br>Taxa de Crescimento de Novos Casos:', Growth_Rate,
                                           '<br>Categoria de Local: ', `Categoria de Local`))) +
   facet_wrap(relacao_marco_maio_melt$`Categoria de Local`)+
-  geom_smooth(method = "lm", se = FALSE, formula = y~x, size = 1) +
-  stat_poly_eq(formula = y~x,
-               aes(label = paste(..eq.label..)),
-               parse = TRUE, label.y = 0.9) +
+  geom_smooth(method = "lm", se = FALSE, formula = y~x, size = 0.7) +
+  geom_text(aes(x=0.8,y=1.25,label=annotations)) +
   theme(plot.title = element_text(size=11, face = "bold"),
         legend.title = element_blank(),
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9)) +
   ylim(0.8, 1.3) +
-  labs(title = "Relação da MR com a GR de Diferentes Categorias para o respetivo Lag Ótimo entre Março e Maio",
+  labs(title = "Relação da MR com a GR de Diferentes Categorias para o respetivo \nLag Ótimo entre Março e Maio",
        x = "MR para Lag Ótimo",
        y = "GR") +
    scale_x_continuous(breaks = seq(0, 1.6, 0.2))
 
 
-
-
+ggplotly(relacao_marco_maio_grafico)
 
 # CORRELACAO MAIO - HOJE
 
