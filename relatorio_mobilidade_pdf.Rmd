@@ -1,6 +1,6 @@
 ---
 title: \vspace{-1cm}Influência da Mobilidade nos Casos de COVID19
-geometry: "left=3cm,right=3cm,top=2cm,bottom=2cm"
+geometry: "left=2cm,right=2cm,top=2cm,bottom=2cm"
 output:
   pdf_document: default
 always_allow_html: true
@@ -44,7 +44,7 @@ mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAWYDXLAZAKBMAX6Y3K7S2UUU")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAV62EFIXPL5OKWK7SK7S3CK4")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -61,7 +61,9 @@ covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 
 ## **Taxa de Mobilidade (MR)**
 
-A base de dados da mobilidade do Facebook, apresenta valores entre -1 e 1. Os valores negativos indicam uma diminuição da movimentação de pessoas em Portugal quando comparado com o valor padrão do mesmo dia da semana antes do início da pandemia (o padrão utilizado foi a média de cada dia da semana de dia 2 a 29 de fevereiro de 2020) e os valores positivos indicam um aumento dessa movimentação. Os valores da base de dados da mobilidade do Google são semelhantes aos do Facebook, mas são apresentados em percentagem. O período de referência é no entanto diferente, uma vez que o dia de referência é o valor da mediana de cada dia da semana, do período de cinco semanas (3 de janeiro a 6 de fevereiro de 2020). No artigo [*The Lancet*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1) os valores da mobilidade variam entre 0 e >1. O valor 0 indica que não houve movimentações, 0.5 significa que foram feitas metade das movimentações em relação ao padrão, 1 indica que não houve alteração no número de movimentações em relação ao padrão e >1 significa que o número de movimentações aumentou. Para os nossos dados terem o mesmo intervalo do que o do artigo, decidimos normalizar os nossos dados somando 1 na base de dados do Facebook e dividindo por 100 e somando 1 na base de dados do Google. Na base de dados do Facebook, uma vez que apenas temos a taxa de mobilidade por distrito, recorremos à média ponderada para obter a taxa de mobilidade diária nacional.
+A base de dados da mobilidade do Facebook, apresenta valores entre -1 e 1. Os valores negativos indicam uma diminuição da movimentação de pessoas em Portugal quando comparado com o valor padrão do mesmo dia da semana antes do início da pandemia (o padrão utilizado foi a média de cada dia da semana de dia 2 a 29 de fevereiro de 2020) e os valores positivos indicam um aumento dessa movimentação. Os valores da base de dados da mobilidade do Google são semelhantes aos do Facebook, mas são apresentados em percentagem. O período de referência é no entanto diferente, uma vez que o dia de referência é o valor da mediana de cada dia da semana, do período de cinco semanas (3 de janeiro a 6 de fevereiro de 2020). 
+
+No artigo [*The Lancet*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1) os valores da mobilidade variam entre 0 e >1. O valor 0 indica que não houve movimentações, 0.5 significa que foram feitas metade das movimentações em relação ao padrão, 1 indica que não houve alteração no número de movimentações em relação ao padrão e >1 significa que o número de movimentações aumentou. Para os nossos dados terem o mesmo intervalo do que o do artigo, decidimos normalizar os nossos dados somando 1 na base de dados do Facebook e dividindo por 100 e somando 1 na base de dados do Google. Na base de dados do Facebook, uma vez que apenas temos a taxa de mobilidade por distrito, recorremos à média ponderada para obter a taxa de mobilidade diária nacional.
 
 \leavevmode
 
@@ -272,6 +274,8 @@ ggplot(gr, aes(x = data, y = Growth_Rate)) +
 
 ```
 
+\leavevmode
+
 Com a análise do primeiro gráfico observamos que a curva da tendência da média dos novos casos dos últimos 3 dias aumentou até ao mês de maio, tendo diminuído até meados de agosto. A partir de setembro a média de novos casos começou novamente a subir tendo ultrapassado os valores do início da pandemia. Esta curva continua com tendência crescente apresentando um declive bastante acentuado.
 
 No segundo gráfico é possível verificar que  a taxa de crescimento de novos casos teve o seu valor máximo no início da pandemia, diminuindo de seguida até meados de maio. A partir de setembro a taxa de crescimento de novos casos tem sido superior a 1 o que significa que a taxa de crescimento dos últimos 3 dias foi superior à dos últimos 7 dias.
@@ -392,14 +396,11 @@ ggplot(correlacao_google, aes(x = Lag, y = Correlacao, color= `Categoria de loca
 
 ```
 
-Ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, verificamos que a correlação é máxima quando o desfasamento é de 17 dias. No entanto, esta correlação é de apenas 0.25 o que indica uma fraca correlação entre as duas variáveis. Assim podemos concluir que, para o perído de março à atualidade, o aumento da taxa de crescimento de novos casos não é significativamente explicado pelo aumento da taxa de mobilidade. 
-
-O mesmo é verificado no gráfico da correlação por categoria de local uma vez que as correlações são menores que 0.5, mostrando uma baixa correlação como é explicado em [*Andrews University*](https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm). Por outro lado, todas as categorias de locais exceto as estações de transportes públicos, apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre março e a atualidade. Assim podemos concluir que, para o perído de março à atualidade, as variações na taxa de crescimento de novos casos não são significativamente explicadas pelas variações na taxa de mobilidade para as diferentes categorias de locais. 
+Ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, verificamos que a correlação é máxima quando o desfasamento é de 17 dias. No entanto, esta correlação é de apenas 0.25 o que indica uma fraca correlação entre as duas variáveis. Assim podemos concluir que, para o perído de março à atualidade, o aumento da taxa de crescimento de novos casos não é significativamente explicado pelo aumento da taxa de mobilidade. O mesmo é verificado no gráfico da correlação por categoria de local uma vez que as correlações são menores que 0.5, mostrando uma baixa correlação como é explicado em [*Andrews University*](https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm). Por outro lado, todas as categorias de locais exceto as estações de transportes públicos, apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre março e a atualidade. Assim podemos concluir que, para o perído de março à atualidade, as variações na taxa de crescimento de novos casos não são significativamente explicadas pelas variações na taxa de mobilidade para as diferentes categorias de locais. 
 
 Com estas conclusões decidimos apresentar também, separadamente, a análise referente a 2 períodos distintos da pandemia. O primeiro é de março a maio, período no qual ainda não eram aplicadas algumas importantes medidas de mitigação, nomeadamente a obrigatoriedade do uso de máscaras em locais fechados. O segundo período é de maio à atualidade, no qual as medidas de mitigação já eram aplicadas mantendo-se semelhantes ao longo de todos os meses.
 
 \leavevmode
-
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE, fig.show="hold", out.width="50%"}
 
@@ -538,7 +539,7 @@ ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria 
   facet_wrap(relacao_marco_maio_melt$`Categoria de Local`)+
   geom_smooth(method = "lm", se = FALSE, formula = y~x, size = 0.7) +
   geom_text(aes(x=0.8,y=1.25,label=annotations)) +
-  theme(plot.title = element_text(size=12, face = "bold"),
+  theme(plot.title = element_text(size=12, face = "bold", hjust = 0.5),
         legend.position = "none",
         axis.title.x = element_text(size = 12),
         axis.title.y = element_text(size = 12)) +
@@ -551,11 +552,8 @@ ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria 
 
 ```
 
-Relativamente às categorias de locais, no primeiro gráfico, verificámos que a correlação de março a maio foi sempre elevada (superior a 0.75 ou inferior a -0.75). A escolha do desfasamento ótimo foi baseada no valor máximo de correlação dentro do período em que a correlação se manteve superior a 0.75 ou inferior a -0.75. Os desfasamentos ótimos variaram entre os 7 e os 9 dias, o que está em concordância com o desfasamento ótimo da taxa de mobilidade nacional.
 
-No gráfico seguinte é possível ver que, para os vários desfasamentos ótimos, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos. Isto apenas não é verdade para a área residencial onde por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos diminui aproximadamente 0.419 unidades (declive da reta da regressão linear), sendo esta a categoria de local com maior influência na alteração do crescimento do número de novos casos.
-
-Assim podemos concluir que, para o perído de março a maio, as alterações na taxa de crescimento de novos casos podem ser explicadas pelas variações na taxa de mobilidade em todas as categorias de locais.
+Relativamente às categorias de locais, no primeiro gráfico, verificámos que a correlação de março a maio foi sempre elevada (superior a 0.75 ou inferior a -0.75). A escolha do desfasamento ótimo foi baseada no valor máximo de correlação dentro do período em que a correlação se manteve superior a 0.75 ou inferior a -0.75. Os desfasamentos ótimos variaram entre os 7 e os 9 dias, o que está em concordância com o desfasamento ótimo da taxa de mobilidade nacional. No gráfico seguinte é possível ver que, para os vários desfasamentos ótimos, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos. Isto apenas não é verdade para a área residencial onde por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos diminui aproximadamente 0.419 unidades (declive da reta da regressão linear), sendo esta a categoria de local com maior influência na alteração do crescimento do número de novos casos. Assim podemos concluir que, para o perído de março a maio, as alterações na taxa de crescimento de novos casos podem ser explicadas pelas variações na taxa de mobilidade em todas as categorias de locais.
 
 \leavevmode
 
@@ -644,3 +642,17 @@ Assim podemos concluir que, tanto para a taxa de mobilidade nacional como para a
 Com esta análise podemos concluir que a mobilidade da população influencia o número de novos casos apenas quando não existem implementadas medidas de mitigação da COVID19. Nestas circunstâncias o desfasamento ótimo é de 7 a 9 dias, o que significa que as alterações na mobilidade só vão ter repercussões no número de novos casos passados 7 a 9 dias. Para além disso, é possível concluir que o destino das deslocações não tem grande influência no aumento deste número, à exceção da mobilidade na área residencial em que o seu aumento influencia fortemente a diminuição do número de novos casos.
 
 Esta conclusão reforça, assim, a grande importância das medidas de mitigação implementadas como a obrigatoriedade do uso de máscara e a limitação do número de pessoas em locais fechados, a lavagem e desinfeção regular das mãos e a recomendação da adoção do distanciamento social.
+
+\leavevmode
+
+\center 
+  
+  **Um trabalho de**
+  
+Carolina Merca [`r icon::fa("linkedin")`](https://www.linkedin.com/in/carolina-merca-1783ba196/) e Raquel Costa [`r icon::fa("linkedin")`](https://www.linkedin.com/in/raquel-costa-881b5015a/)
+
+karolmerka@hotmail.com e raqueldelobocosta@gmail.com
+
+[`r icon::fa("github")`](https://github.com/EpiVet2020/Mobilidade_COVID19)
+
+\center 
