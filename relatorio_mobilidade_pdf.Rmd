@@ -44,7 +44,7 @@ mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAU7NTDOJC4CPMNP4YS7S4A4Y")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAWCRSOUN6AKWT224SS7TBFIG")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -456,9 +456,9 @@ ggplot(gr_mr_lag_marco_maio, aes(x = `mr_ 9`, y = Growth_Rate)) +
 
 No gráfico à esquerda, verificámos que a correlação de março a maio é máxima quando o desfasamento é de 9 dias, apresentando o valor de cerca de 0.80, indicando uma forte correlação entre as duas variáveis.
 
-No gráfico à direita é possível ver que, para o desfasamento ótimo, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos. Por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos aumenta aproximadamente 0.258 unidades (declive da reta da regressão linear).
+No gráfico à direita é possível ver que, para o desfasamento ótimo, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos.  Por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos aumenta aproximadamente 0.258 unidades (declive da reta da regressão linear). Através do coeficiente de determinação (R² = 0.71) podemos perceber que 71% da variação na taxa de crescimento de novos casos é explicada pela taxa de mobilidade de há 9 dias atrás.
 
-Assim podemos concluir que, para o perído de março a maio, o aumento da taxa de crescimento de novos casos pode ser explicado pelo aumento da taxa de mobilidade. Apesar de se tratar de um período de quarentena onde a taxa de mobilidade diminuiu consideravelmente em relação ao padrão, as poucas deslocações que eram realizadas justificaram o aumento da taxa de crescimento de novos casos pela ausência de importantes medidas de mitigação como a obrigatoriedade de uso de máscaras em locais fechados, a existência de desinfetantes para uso da população e a limitação do número de pessoas em determinados espaços.
+Assim podemos concluir que, para o perído de março a maio, o aumento da taxa de crescimento de novos casos pode ser explicado pelo aumento da taxa de mobilidade com 9 dias de desfasamento. Apesar de se tratar de um período de quarentena onde a taxa de mobilidade diminuiu consideravelmente em relação ao padrão, as poucas deslocações que eram realizadas justificaram o aumento da taxa de crescimento de novos casos pela ausência de importantes medidas de mitigação como a obrigatoriedade de uso de máscaras em locais fechados, a existência de desinfetantes para uso da população e a limitação do número de pessoas em determinados espaços.
 
 \leavevmode
 
@@ -529,8 +529,14 @@ names(relacao_marco_maio_melt)[-1] <- c("Categoria de Local", "MR")
 
 ## Fazer um grafico da relacao da mobilidade para cada categoria de local para lag otimo com a taxa de crescimento de novos entre casos de marco e maio
 
-relacao_marco_maio_melt$annotations = rep(c("y = 0.948 + 0.183 x", "y = 0.911 + 0.217 x", "y = 0.886 + 0.193 x",
-                                            "y = 0.939 + 0.161 x", "y = 1.55 - 0.419 x", "y = 0.946 + 0.182 x"), each = 61)
+relacao_marco_maio_melt$annotations = rep(c("y = 0.948 + 0.183 x", "y = 0.911 + 0.217 x", 
+                                            "y = 0.886 + 0.193 x","y = 0.939 + 0.161 x", 
+                                            "y = 1.55 - 0.419 x", "y = 0.946 + 0.182 x"), 
+                                          each = 61)
+relacao_marco_maio_melt$annotations_2 = rep(c("R² = 0.79", "R² = 0.75", 
+                                            "R² = 0.58","R² = 0.73", 
+                                            "R² = 0.7", "R² = 0.74"), 
+                                          each = 61)
 
 ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria de Local`)) +
   geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', MR,
@@ -539,6 +545,7 @@ ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria 
   facet_wrap(relacao_marco_maio_melt$`Categoria de Local`)+
   geom_smooth(method = "lm", se = FALSE, formula = y~x, size = 0.7) +
   geom_text(aes(x=0.8,y=1.25,label=annotations)) +
+  geom_text(aes(x=0.55,y=1.18,label=annotations_2)) +
   theme(plot.title = element_text(size=12, face = "bold", hjust = 0.5),
         legend.position = "none",
         axis.title.x = element_text(size = 12),
@@ -551,9 +558,16 @@ ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria 
 
 
 ```
+\leavevmode
 
+$~$
 
-Relativamente às categorias de locais, no primeiro gráfico, verificámos que a correlação de março a maio foi sempre elevada (superior a 0.75 ou inferior a -0.75). A escolha do desfasamento ótimo foi baseada no valor máximo de correlação dentro do período em que a correlação se manteve superior a 0.75 ou inferior a -0.75. Os desfasamentos ótimos variaram entre os 7 e os 9 dias, o que está em concordância com o desfasamento ótimo da taxa de mobilidade nacional. No gráfico seguinte é possível ver que, para os vários desfasamentos ótimos, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos. Isto apenas não é verdade para a área residencial onde por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos diminui aproximadamente 0.419 unidades (declive da reta da regressão linear), sendo esta a categoria de local com maior influência na alteração do crescimento do número de novos casos. Assim podemos concluir que, para o perído de março a maio, as alterações na taxa de crescimento de novos casos podem ser explicadas pelas variações na taxa de mobilidade em todas as categorias de locais.
+Relativamente às categorias de locais, no primeiro gráfico, verificámos que a correlação de março a maio foi elevada em certos desfasamentos (superior a 0.75 ou inferior a -0.75) para todas as categorias de locais. A escolha do desfasamento ótimo foi baseada no valor máximo de correlação dentro do período em que a correlação se manteve superior a 0.75 ou inferior a -0.75. Os desfasamentos ótimos variaram entre os 7 e os 9 dias, o que está em concordância com o desfasamento ótimo da taxa de mobilidade nacional.
+
+No gráfico seguinte é possível ver que, para os vários desfasamentos ótimos, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos. Isto apenas não é verdade para a área residencial onde por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos diminui aproximadamente 0.419 unidades (declive da reta da regressão linear). Através dos coeficientes de determinação (R²) podemos perceber que 58 a 79% da variação na taxa de crescimento de novos casos é explicada pela taxa de mobilidade nas diferentes categorias de locais para o desfasamento ótimo respetivo. 
+
+Assim podemos concluir que, para o perído de março a maio, as alterações na taxa de crescimento de novos casos podem ser explicadas pelas variações na taxa de mobilidade em todas as categorias de locais para os desfasamentos ótimos respetivos.
+
 
 \leavevmode
 
@@ -630,6 +644,8 @@ ggplot(correlacao_google_maio_hoje, aes(x = Lag, y = Correlacao, color= `Categor
 
 ```
 
+\leavevmode
+
 Por fim, ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, para o período de maio até à atualidade, verificamos que a correlação é máxima quando o desfasamento é de 26 dias. No entanto, esta correlação é de apenas 0.20 o que indica uma fraca correlação entre as duas variáveis.
 
 Relativamente às categorias de locais o mesmo é verificado, uma vez que as correlações são menores que 0.5 e apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões, não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre maio e a atualidade.
@@ -639,7 +655,7 @@ Assim podemos concluir que, tanto para a taxa de mobilidade nacional como para a
 
 ## **Conclusão**
 
-Com esta análise podemos concluir que a mobilidade da população influencia o número de novos casos apenas quando não existem implementadas medidas de mitigação da COVID19. Nestas circunstâncias o desfasamento ótimo é de 7 a 9 dias, o que significa que as alterações na mobilidade só vão ter repercussões no número de novos casos passados 7 a 9 dias. Para além disso, é possível concluir que o destino das deslocações não tem grande influência no aumento deste número, à exceção da mobilidade na área residencial em que o seu aumento influencia fortemente a diminuição do número de novos casos.
+Com esta análise podemos concluir que a mobilidade da população influencia o número de novos casos apenas quando não existem implementadas medidas de mitigação da COVID19. Nestas circunstâncias o desfasamento ótimo é de 7 a 9 dias, o que significa que as alterações na mobilidade só vão ter repercussões no número de novos casos passados 7 a 9 dias. Para além disso, é possível concluir que as deslocações, independentemente do destino, explicam de forma semelhante a variação deste número.
 
 Esta conclusão reforça, assim, a grande importância das medidas de mitigação implementadas como a obrigatoriedade do uso de máscara e a limitação do número de pessoas em locais fechados, a lavagem e desinfeção regular das mãos e a recomendação da adoção do distanciamento social.
 
