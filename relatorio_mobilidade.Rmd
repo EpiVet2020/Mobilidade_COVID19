@@ -84,7 +84,7 @@ mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAS6PPA2AWDNDE7TUM27S3BOG")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTASGNYEWF47XJM4XL2C7S365U")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")

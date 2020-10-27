@@ -44,7 +44,7 @@ mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAV62EFIXPL5OKWK7SK7S3CK4")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAU7NTDOJC4CPMNP4YS7S4A4Y")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -643,7 +643,7 @@ Com esta análise podemos concluir que a mobilidade da população influencia o 
 
 Esta conclusão reforça, assim, a grande importância das medidas de mitigação implementadas como a obrigatoriedade do uso de máscara e a limitação do número de pessoas em locais fechados, a lavagem e desinfeção regular das mãos e a recomendação da adoção do distanciamento social.
 
-\leavevmode
+$~$
 
 \center 
   
