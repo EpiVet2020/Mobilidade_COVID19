@@ -8,7 +8,7 @@ library(corrr)
 library(ggthemes)
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32NFOTWT6PEUATFCJWC7SG77Y")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32L64MXUTSBHWEGCTO27TA4KQ")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -166,7 +166,6 @@ ggplotly(correlacao_google_grafico, tooltip = "text")
 
 
 
-
 # CORRELACAO MARCO - MAIO
 
 ## Tabela com a correlacao da mobilidade para cada categoria de local para diferentes desfasamentos com a 
@@ -234,8 +233,8 @@ names(relacao_marco_maio_melt)[-1] <- c("Categoria de Local", "MR")
 ## Fazer um grafico da relacao da mobilidade para cada categoria de local para lag otimo com a
 ##taxa de crescimento de novos entre casos de marco e maio
 
-relacao_marco_maio_melt$annotations = rep(c("y = 0.948 + 0.183 x", "y = 0.911 + 0.217 x", "y = 0.886 + 0.193 x",
-                                            "y = 0.939 + 0.161 x", "y = 1.55 - 0.419 x", "y = 0.946 + 0.182 x"), each = 61)
+relacao_marco_maio_melt$annotations = rep(c("y = 0.948 + 0.183 x  R² = 0.79", "y = 0.911 + 0.217 x  R² = 0.75", "y = 0.886 + 0.193 x  R² = 0.58",
+                                            "y = 0.939 + 0.161 x  R² = 0.73", "y = 1.55 - 0.419 x  R² = 0.7", "y = 0.946 + 0.182 x  R² = 0.74"), each = 61)
 
 relacao_marco_maio_grafico <- ggplot(relacao_marco_maio_melt, aes(x = MR, y = Growth_Rate, color = `Categoria de Local`)) +
   geom_point(size = 0.7, aes(text = paste('Taxa de Mobilidade: ', MR,
@@ -256,6 +255,8 @@ relacao_marco_maio_grafico <- ggplot(relacao_marco_maio_melt, aes(x = MR, y = Gr
 
 
 ggplotly(relacao_marco_maio_grafico)
+
+ 
 
 # CORRELACAO MAIO - HOJE
 
