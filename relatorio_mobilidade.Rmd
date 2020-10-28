@@ -848,3 +848,15 @@ Esta conclusão reforça, assim, a grande importância das medidas de mitigaçã
 
 <br>
 
+<center>
+
+  **Um trabalho de**
+
+Carolina Merca [`r icon::fa("linkedin")`](https://www.linkedin.com/in/carolina-merca-1783ba196/) e Raquel Costa [`r icon::fa("linkedin")`](https://www.linkedin.com/in/raquel-costa-881b5015a/)
+
+karolmerka@hotmail.com e raqueldelobocosta@gmail.com
+
+[`r icon::fa("github")`](https://github.com/EpiVet2020/Mobilidade_COVID19)
+
+</center>
+
