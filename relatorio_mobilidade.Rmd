@@ -84,11 +84,7 @@ mobilidade_facebook_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epiv
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-<<<<<<< HEAD
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAWG6BDJGYCCU334KQ27TL4DS")
-=======
 mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32MNMTMZWLRCN7BJ7D27TLTB2")
->>>>>>> 65525cfaf398d1517b43a61a6ace267181c024e6
 
 
 ## por as datas em formato data
