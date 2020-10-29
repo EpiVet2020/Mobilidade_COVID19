@@ -5,10 +5,9 @@ output:
     code_folding: hide
     includes:
       before_body: header_mobilidade.Rhtml
-
+bibliography: bibliografia.bib
 
 ---
-
 
 <style type="text/css">
 .main-container {
@@ -49,11 +48,12 @@ Com esta análise temos como objetivo responder à questão *De que forma a mobi
 
 Deste modo, queremos perceber se um maior movimento das pessoas está associado a um aumento do número de casos de COVID19 a nível nacional.  Para além disso, é também objetivo de estudo perceber quais são os destinos dessas deslocações que têm maior influência no aumento do número de casos.
 
-Para esta análise baseámo-nos na metodologia utilizada pelo artigo do [*The Lancet*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1). 
+Para esta análise baseámo-nos na metodologia utilizada pelo artigo do [*The Lancet - Association between mobility patterns and COVID-19 transmission in the USA: a mathematical modelling study*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1) [@lancet]. 
 
 Para obtermos os dados da movimentação da população em Portugal, recorremos à base de dados do Facebook disponível em [*The Humanitarian Data Exchange*](https://data.humdata.org/dataset/movement-range-maps) cuja explicação das fórmulas utilizadas se encontra em [*Facebook Research*](https://research.fb.com/blog/2020/06/protecting-privacy-in-facebook-mobility-data-during-the-covid-19-response/). Para a movimentação para cada local recorremos à base de dados da Google disponível em [*Google Relatórios da Mobilidade da Comunidade*](https://www.google.com/covid19/mobility/), cuja explicação se encontra em [*Google Ajuda do Relatório da Mobilidade da Comunidade*](https://support.google.com/covid19-mobility/answer/9824897?hl=pt-BR&ref_topic=9822927). Relativamente aos dados da taxa de crescimento de novos casos em Portugal, utilizámos a base de dados disponível no github da [*Data Science for Social Good Portugal*](https://github.com/dssg-pt/covid19pt-data).
 
 Esta análise pode ajudar a perceber se medidas como confinamento e limitação da deslocação de pessoas apresentam uma eficácia significativa, uma vez que a aplicação das mesmas tem um grande impacto na vida da população e na economia do país.
+
 
 ```{r warning=FALSE, message=FALSE}
 # IMPORTAR LIBRARIES
@@ -84,7 +84,7 @@ mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAT7I6NLV3OEK5EEX5S7TKLKU")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAWG6BDJGYCCU334KQ27TL4DS")
 
 
 ## por as datas em formato data
@@ -108,7 +108,7 @@ covid19pt$data <- as.Date(as.character(covid19pt$data),format = "%d-%m-%Y")
 
 A base de dados da mobilidade do Facebook, apresenta valores entre -1 e 1. Os valores negativos indicam uma diminuição da movimentação de pessoas em Portugal quando comparado com o valor padrão do mesmo dia da semana antes do início da pandemia (o padrão utilizado foi a média de cada dia da semana de dia 2 a 29 de fevereiro de 2020) e os valores positivos indicam um aumento dessa movimentação. Os valores da base de dados da mobilidade do Google são semelhantes aos do Facebook, mas são apresentados em percentagem. O período de referência é no entanto diferente, uma vez que o dia de referência é o valor da mediana de cada dia da semana, do período de cinco semanas (3 de janeiro a 6 de fevereiro de 2020).
 
-No artigo [*The Lancet*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1) os valores da mobilidade variam entre 0 e >1. O valor 0 indica que não houve movimentações, 0.5 significa que foram feitas metade das movimentações em relação ao padrão, 1 indica que não houve alteração no número de movimentações em relação ao valor de referência e >1 significa que o número de movimentações aumentou. 
+No artigo [*The Lancet - Association between mobility patterns and COVID-19 transmission in the USA: a mathematical modelling study*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1) [@lancet] os valores da mobilidade variam entre 0 e >1. O valor 0 indica que não houve movimentações, 0.5 significa que foram feitas metade das movimentações em relação ao padrão, 1 indica que não houve alteração no número de movimentações em relação ao valor de referência e >1 significa que o número de movimentações aumentou. 
 
 Para os nossos dados terem o mesmo intervalo do que o do artigo, decidimos normalizar os nossos dados somando 1 na base de dados do Facebook e dividindo por 100 e somando 1 na base de dados do Google.  
 
@@ -294,7 +294,7 @@ O gráfico à direita, mostra-nos a movimentação das pessoas por categoria de 
 ***
 <br>
 
-Para perceber se a mobilidade afeta o número de novos casos, tivemos de calcular a taxa de crescimento de novos casos. Segundo o [*The Lancet*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1), a taxa de crescimento de novos casos calcula-se dividindo o logaritmo da média de novos casos dos últimos 3 dias pelo logaritmo da média de novos casos dos últimos 7 dias. Quando a taxa de crescimento de novos casos é igual a 1 significa que não ocorreu nenhuma alteração na taxa de crescimento de novos casos na última semana, ou seja, o número médio de novos casos dos últimos 3 dias é igual à média dos últimos 7 dias. Quando a taxa de crescimento de novos casos é inferior a 1, significa que a média de novos casos dos últimos 3 dias foi inferior à média dos últimos 7 dias. Por fim, quando a taxa de crescimento é superior a 1, significa que a média de novos casos dos últimos 3 dias foi superior à média da últimos 7 dias.
+Para perceber se a mobilidade afeta o número de novos casos, tivemos de calcular a taxa de crescimento de novos casos. Segundo o [*The Lancet - Association between mobility patterns and COVID-19 transmission in the USA: a mathematical modelling study*](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30553-3/fulltext#sec1) [@lancet], a taxa de crescimento de novos casos calcula-se dividindo o logaritmo da média de novos casos dos últimos 3 dias pelo logaritmo da média de novos casos dos últimos 7 dias. Quando a taxa de crescimento de novos casos é igual a 1 significa que não ocorreu nenhuma alteração na taxa de crescimento de novos casos na última semana, ou seja, o número médio de novos casos dos últimos 3 dias é igual à média dos últimos 7 dias. Quando a taxa de crescimento de novos casos é inferior a 1, significa que a média de novos casos dos últimos 3 dias foi inferior à média dos últimos 7 dias. Por fim, quando a taxa de crescimento é superior a 1, significa que a média de novos casos dos últimos 3 dias foi superior à média da últimos 7 dias.
 
 <br>
 
@@ -373,7 +373,7 @@ No segundo gráfico é possível verificar que  a taxa de crescimento de novos c
 ***
 <br>
 
-A mobilidade não tem efeitos imediatos no número de novos casos. Assim, temos de perceber quanto tempo demora até a mobilidade provocar uma alteração nesse número. Para isso, recorremos à correlação de Pearson e considerámos que o desfasamento é ótimo quando a correlação entre a taxa de mobilidade e a taxa de crescimento de novos casos para diferentes desfasamentos é máxima.
+A mobilidade poderá não tem efeitos imediatos no número de novos casos. Assim, temos de perceber quanto tempo demora até a mobilidade provocar uma alteração nesse número. Para isso, recorremos à correlação de Pearson e considerámos que o desfasamento é ótimo quando a correlação entre a taxa de mobilidade e a taxa de crescimento de novos casos para diferentes desfasamentos é máxima.
 
 <br>
 
@@ -514,7 +514,7 @@ $~$
 
 Ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, verificamos que a correlação é máxima quando o desfasamento é de 17 dias. No entanto, esta correlação é de apenas 0.25 o que indica uma fraca correlação entre as duas variáveis. Assim podemos concluir que, para o perído de março à atualidade, o aumento da taxa de crescimento de novos casos não é significativamente explicado pelo aumento da taxa de mobilidade. 
 
-O mesmo é verificado no gráfico da correlação por categoria de local uma vez que as correlações são menores que 0.5, mostrando uma baixa correlação como é explicado em [*Andrews University*](https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm). Por outro lado, todas as categorias de locais exceto as estações de transportes públicos, apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre março e a atualidade. Assim podemos concluir que, para o perído de março à atualidade, as variações na taxa de crescimento de novos casos não são significativamente explicadas pelas variações na taxa de mobilidade para as diferentes categorias de locais. 
+O mesmo é verificado no gráfico da correlação por categoria de local uma vez que as correlações são menores que 0.5, mostrando uma baixa correlação como é explicado em [*Andrews University*](https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm) [@andrews]. Por outro lado, todas as categorias de locais exceto as estações de transportes públicos, apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre março e a atualidade. Assim podemos concluir que, para o perído de março à atualidade, as variações na taxa de crescimento de novos casos não são significativamente explicadas pelas variações na taxa de mobilidade para as diferentes categorias de locais. 
 
 Ao depararmo-nos com estas conclusões decidimos apresentar também, separadamente, a análise referente a 2 períodos distintos da pandemia. O primeiro é de março a maio, período no qual ainda não eram aplicadas algumas importantes medidas de mitigação, nomeadamente a obrigatoriedade do uso de máscaras em locais fechados. O segundo período é de maio à atualidade, no qual as medidas de mitigação já são aplicadas mantendo-se semelhantes ao longo de todos os meses.
 
@@ -572,7 +572,7 @@ grmr_marco_maio_grafico <- ggplot(gr_mr_lag_marco_maio, aes(x = `mr_ 9`, y = Gro
   scale_x_continuous(breaks = seq(0, 1, 0.1))
 
 grmr_marco_maio_grafico_interativo <- ggplotly(grmr_marco_maio_grafico, tooltip = "text") %>% 
-  layout(annotations = list(x = 0.7, y = 0.4, text = "y = 0.866 + 0.258 x   R² = 0.71", showarrow = FALSE)) 
+  layout(annotations = list(x = 0.7, y = 0.4, text = "y = 0.875 + 0.248 x   R² = 0.71", showarrow = FALSE)) 
 
 
 
@@ -595,7 +595,7 @@ $~$
 
 No gráfico à esquerda, verificámos que a correlação de março a maio é máxima quando o desfasamento é de 9 dias, apresentando o valor de cerca de 0.80, indicando uma forte correlação entre as duas variáveis.
 
-No gráfico à direita é possível ver que, para o desfasamento ótimo, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos.  Por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos aumenta aproximadamente 0.258 unidades (declive da reta de regressão linear). Através do coeficiente de determinação (R² = 0.71) podemos perceber que 71% da variação na taxa de crescimento de novos casos é explicada pela taxa de mobilidade de há 9 dias atrás.
+No gráfico à direita é possível ver que, para o desfasamento ótimo, o aumento da taxa de mobilidade provoca um aumento da taxa de crescimento de novos casos.  Por cada aumento de uma unidade da taxa de mobilidade, a taxa de crescimento de novos casos aumenta aproximadamente 0.248 unidades (declive da reta de regressão linear). Através do coeficiente de determinação (R² = 0.71) podemos perceber que 71% da variação na taxa de crescimento de novos casos é explicada pela taxa de mobilidade de há 9 dias atrás.
 
 Assim podemos concluir que, para o perído de março a maio, o aumento da taxa de crescimento de novos casos pode ser explicado pelo aumento da taxa de mobilidade com 9 dias de desfasamento. Apesar de se tratar de um período de quarentena onde a taxa de mobilidade diminuiu consideravelmente em relação ao padrão, as poucas deslocações que eram realizadas justificaram o aumento da taxa de crescimento de novos casos pela ausência de importantes medidas de mitigação como a obrigatoriedade de uso de máscaras em locais fechados, a existência de desinfetantes para uso da população e a limitação do número de pessoas em determinados espaços.
 
@@ -839,12 +839,20 @@ Assim podemos concluir que, tanto para a taxa de mobilidade nacional como para a
 <br>
 Com esta análise podemos concluir que, apesar de todas as implicações sociais e económicas, as medidas de confinamento foram eficazes na diminuição do número de novos casos. 
 
-Também é possível concluir que a mobilidade da população influencia o número de novos casos apenas quando não existem implementadas medidas de mitigação da COVID19. Nestas circunstâncias o desfasamento ótimo é de 7 a 9 dias, o que significa que as alterações na mobilidade só vão ter repercussões no número de novos casos passados 7 a 9 dias. Para além disso, é possível concluir que as deslocações, independentemente do destino, explicam de forma semelhante a variação deste número quando não existem medidas de mitigação em vigor.
+Também é possível concluir que a mobilidade da população influencia o número de novos casos apenas quando não existem implementadas medidas de mitigação da COVID-19. Nestas circunstâncias o desfasamento ótimo é de 7 a 9 dias, o que significa que as alterações na mobilidade só vão ter repercussões no número de novos casos passados 7 a 9 dias. Para além disso, é possível concluir que as deslocações, independentemente do destino, explicam de forma semelhante a variação deste número quando não existem medidas de mitigação em vigor.
 
 Esta conclusão reforça, assim, a grande importância das medidas de mitigação implementadas como a obrigatoriedade do uso de máscara e a limitação do número de pessoas em locais fechados, a lavagem e desinfeção regular das mãos e a recomendação da adoção do distanciamento social.
 
 <br>
 
+
+## **Bibliografia**
+***
+
+
+<div id="refs"></div>
+
+$~$
 <center>
 
   **Um trabalho de**
