@@ -78,17 +78,14 @@ library(gridExtra)
 
 # IMPORTAR BASE DE DADOS SOBRE MOBILIDADE DIÁRIA POR DISTRITOS NO MUNDO DISPONIVEIS  EM: <https://data.humdata.org/dataset/movement-range-maps>
 
-#mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
+mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa/R/Faculdade/2.COVID19 Portugal/Partilhado/Mobilidade_COVID19/dados_mobilidade/movement-range-2020-10-10.txt")
 
-mobilidade_facebook_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
+#mobilidade_facebook_c <- fread("C:/Users/karol/Documents/R/Covid-19_estagio/Epivet2020/movement-range-2020-10-10.txt")
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-<<<<<<< HEAD
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AQ6V32M2APZWBTJN72JR7O27TE4XU")
-=======
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTARD5XLQSQHJU2CCKZ27TFOZ6")
->>>>>>> 1b9c5b07d21e053b9f59b2705d4b11c53b050491
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAT7I6NLV3OEK5EEX5S7TKLKU")
+
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -123,7 +120,7 @@ Na base de dados do Facebook, uma vez que apenas temos a taxa de mobilidade por 
 # Facebook
 
 ## Selecionar Portugal na base de dados
-mobilidade_facebook_pt <- mobilidade_facebook_c %>% 
+mobilidade_facebook_pt <- mobilidade_facebook_r %>% 
   filter(country=="PRT")
 
 ## Corrigir os nomes dos distritos
