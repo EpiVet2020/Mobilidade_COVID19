@@ -129,7 +129,11 @@ covid_concelhos <- fread("https://raw.githubusercontent.com/dssg-pt/covid19pt-da
 
 # IMPORTAR BASE DE DADOS QUE CORRELACIONA CONCELHOS COM DSTRITOS DISPONIVEL EM: <https://www.factorvirtual.com/blog/distritos-concelhos-e-freguesias-de-portugal>
 
+<<<<<<< HEAD
 concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AO4UTAQWNINJ7D5NSE3ERSC7TLHCI") %>% 
+=======
+concelho_distrito <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/concelho_distrito.csv?token=AQ6V32NQ5FLAF65TC7LXBRS7TLSYM") %>% 
+>>>>>>> 65525cfaf398d1517b43a61a6ace267181c024e6
   select("DesignaÃ§Ã£o DT", "DesignaÃ§Ã£o CC")
 
 
