@@ -44,7 +44,7 @@ mobilidade_facebook_r <- fread("C:/Users/rakac/OneDrive - Universidade de Lisboa
 
 
 #IMPORTAR BASE DE DADOS DO GOOGLE DISPONÍVEL EM <https://www.google.com/covid19/mobility/>
-mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTAQGY6CUF2JOHIYIR2K7TL42U")
+mobilidade_google <- fread("https://raw.githubusercontent.com/EpiVet2020/Mobilidade_COVID19/main/google_mobilidade_pt.csv?token=AO4UTASG6G4Q4V23GWFEXHC7ULRUS")
 
 ## por as datas em formato data
 mobilidade_google$date <- as.Date(mobilidade_google$date,format = "%d-%m-%Y")
@@ -271,7 +271,7 @@ ggplot(gr, aes(x = data, y = Growth_Rate)) +
 
 ```
 
-
+\newpage
 Com a análise do primeiro gráfico observamos que a curva da tendência da média dos novos casos dos últimos 3 dias aumentou até ao mês de maio, tendo diminuído até meados de agosto. A partir de setembro a média de novos casos começou novamente a subir tendo ultrapassado os valores do início da pandemia. Esta curva continua com tendência crescente apresentando um declive bastante acentuado. No segundo gráfico é possível verificar que  a taxa de crescimento de novos casos teve o seu valor máximo no início da pandemia, diminuindo de seguida até meados de maio. Isto demonstra que as medidas de confinamento e a limitação de deslocação de pessoas, foram eficazes na diminuição da taxa de crescimento de novos casos. A partir de setembro a taxa de crescimento de novos casos tem demonstrado um comportamento crescente uma vez que tem apresentado valores superiores a 1.
 
 
@@ -389,6 +389,8 @@ ggplot(correlacao_google, aes(x = Lag, y = Correlacao, color= `Categoria de loca
 
 
 ```
+
+$~$
 
 Ao realizar a correlação entre as taxa de mobilidade e a taxa de crescimento de novos casos para os diferentes desfasamentos, verificamos que a correlação é máxima quando o desfasamento é de 17 dias. No entanto, esta correlação é de apenas 0.25 o que indica uma fraca correlação entre as duas variáveis. Assim podemos concluir que, para o perído de março à atualidade, o aumento da taxa de crescimento de novos casos não é significativamente explicado pelo aumento da taxa de mobilidade. O mesmo é verificado no gráfico da correlação por categoria de local uma vez que as correlações são menores que 0.5, mostrando uma baixa correlação como é explicado em [*Andrews University*](https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm) [@andrews]. Por outro lado, todas as categorias de locais exceto as estações de transportes públicos, apresentam um comportamento oscilatório com grandes variações na amplitude entre os vários dias de desfasamento. Por estas razões não é possível a determinação de um desfasamento ótimo entre a taxa de mobilidade para diferentes categorias de locais e a taxa de crescimento de novos casos entre março e a atualidade. Assim podemos concluir que, para o perído de março à atualidade, as variações na taxa de crescimento de novos casos não são significativamente explicadas pelas variações na taxa de mobilidade para as diferentes categorias de locais. 
 Ao depararmo-nos com estas conclusões decidimos apresentar também, separadamente, a análise referente a 2 períodos distintos da pandemia. O primeiro é de março a maio, período no qual ainda não eram aplicadas algumas importantes medidas de mitigação, nomeadamente a obrigatoriedade do uso de máscaras em locais fechados. O segundo período é de maio à atualidade, no qual as medidas de mitigação já são aplicadas mantendo-se semelhantes ao longo de todos os meses.
