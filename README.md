@@ -2,7 +2,7 @@
 
 Com os ficheiros presentes neste repositório temos como objetivo responder à questão *De que forma a mobilidade está associada à ocorrência de novos casos?* 
 
-Deste modo, queremos perceber se o movimento de pessoas está associado a um aumento do número de casos de COVID19. Queremos perceber ainda de que modo esses movimentos influenciam o número de casos quer a nível naional, quer a nível regional e se o local da movimentação provoca alterações nessa influência.
+Deste modo, queremos perceber se um maior movimento das pessoas está associado a um aumento do número de casos de COVID-19 a nível nacional.  Para além disso, é também objetivo de estudo perceber quais são os destinos dessas deslocações que têm maior influência no aumento do número de casos.
 
 
 ## Facebook
